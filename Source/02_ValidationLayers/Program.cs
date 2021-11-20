@@ -17,7 +17,7 @@ unsafe class HelloTriangleApplication
     const int WIDTH = 800;
     const int HEIGHT = 600;
 
-    const bool EnableValidationLayers = false;
+    bool EnableValidationLayers = false;
 
     private readonly string[] validationLayers = new []
     {
@@ -27,7 +27,7 @@ unsafe class HelloTriangleApplication
     private IWindow? window;
     private Vk? vk;
     private Instance instance;
-    private ExtDebugUtils debugUtils;
+    private ExtDebugUtils? debugUtils;
     private DebugUtilsMessengerEXT debugMessenger;
 
     public void Run()
@@ -138,12 +138,12 @@ unsafe class HelloTriangleApplication
     private void SetupDebugMessenger()
     {
         if (!EnableValidationLayers) return;
-        if (!vk.TryGetInstanceExtension(instance, out debugUtils)) return;
+        if (!vk!.TryGetInstanceExtension(instance, out debugUtils)) return;
 
         DebugUtilsMessengerCreateInfoEXT createInfo = new();
         PopulateDebugMessengerCreateInfo(ref createInfo);
 
-        if (debugUtils.CreateDebugUtilsMessenger(instance, in createInfo, null, out debugMessenger) != Result.Success)
+        if (debugUtils!.CreateDebugUtilsMessenger(instance, in createInfo, null, out debugMessenger) != Result.Success)
         {
             throw new Exception("failed to set up debug messenger!");
         }
@@ -194,6 +194,11 @@ unsafe class HelloTriangleApplication
 
     private void CleanUp()
     {
+        if (EnableValidationLayers)
+        {
+            debugUtils!.DestroyDebugUtilsMessenger(instance, debugMessenger, null);
+        }
+
         vk?.DestroyInstance(instance, null);
         vk?.Dispose();
         window?.Dispose();
