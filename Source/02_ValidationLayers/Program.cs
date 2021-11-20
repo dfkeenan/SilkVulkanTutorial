@@ -138,6 +138,8 @@ unsafe class HelloTriangleApplication
     private void SetupDebugMessenger()
     {
         if (!EnableValidationLayers) return;
+
+        //TryGetInstanceExtension equivilant to method CreateDebugUtilsMessengerEXT from original tutorial.
         if (!vk!.TryGetInstanceExtension(instance, out debugUtils)) return;
 
         DebugUtilsMessengerCreateInfoEXT createInfo = new();
@@ -196,6 +198,7 @@ unsafe class HelloTriangleApplication
     {
         if (EnableValidationLayers)
         {
+            //DestroyDebugUtilsMessenger equivilant to method DestroyDebugUtilsMessengerEXT from original tutorial.
             debugUtils!.DestroyDebugUtilsMessenger(instance, debugMessenger, null);
         }
 
