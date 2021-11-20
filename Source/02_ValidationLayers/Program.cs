@@ -5,6 +5,7 @@ using Silk.NET.Core.Native;
 using Silk.NET.Input;
 using Silk.NET.Maths;
 using Silk.NET.Vulkan;
+using Silk.NET.Vulkan.Extensions.EXT;
 using Silk.NET.Windowing;
 
 
@@ -26,6 +27,8 @@ unsafe class HelloTriangleApplication
     private IWindow? window;
     private Vk? vk;
     private Instance instance;
+    private ExtDebugUtils debugUtils;
+    private DebugUtilsMessengerEXT debugMessenger;
 
     public void Run()
     {
@@ -55,6 +58,7 @@ unsafe class HelloTriangleApplication
     private void InitVulkan()
     {
         CreateInstance();
+        SetupDebugMessenger();
     }
 
     private void CreateInstance()
@@ -82,17 +86,16 @@ unsafe class HelloTriangleApplication
             PApplicationInfo = &appInfo
         };
 
-        var glfwExtensions = window!.VkSurface!.GetRequiredExtensions(out var glfwExtensionCount);
-
-        createInfo.EnabledExtensionCount = glfwExtensionCount;
-        createInfo.PpEnabledExtensionNames = glfwExtensions;
+        var extensions = GetRequiredExtensions();
+        createInfo.EnabledExtensionCount = (uint)extensions.Length;
+        createInfo.PpEnabledExtensionNames = (byte**)SilkMarshal.StringArrayToPtr(extensions); ;
         
         if (EnableValidationLayers)
         {
             createInfo.EnabledLayerCount = (uint)validationLayers.Length;
             createInfo.PpEnabledLayerNames = (byte**)SilkMarshal.StringArrayToPtr(validationLayers);
 
-            var debugCreateInfo = new DebugUtilsMessengerCreateInfoEXT();
+            DebugUtilsMessengerCreateInfoEXT debugCreateInfo = new ();
             PopulateDebugMessengerCreateInfo(ref debugCreateInfo);
             createInfo.PNext = &debugCreateInfo;
         }
@@ -112,23 +115,12 @@ unsafe class HelloTriangleApplication
 
         Marshal.FreeHGlobal((nint)appInfo.PApplicationName);
         Marshal.FreeHGlobal((nint)appInfo.PEngineName);
+        SilkMarshal.Free((nint)createInfo.PpEnabledExtensionNames);
 
         if (EnableValidationLayers)
         {
             SilkMarshal.Free((nint)createInfo.PpEnabledLayerNames);
         }
-    }
-
-    private bool CheckValidationLayerSupport()
-    {
-        uint layerCount = 0;
-        vk!.EnumerateInstanceLayerProperties(ref layerCount, null);
-        var availableLayers = new LayerProperties[layerCount];
-        vk!.EnumerateInstanceLayerProperties(ref layerCount, ref availableLayers[0]);
-
-        var availableLayerNames = availableLayers.Select(layer => Marshal.PtrToStringAnsi((IntPtr)layer.LayerName)).ToHashSet();
-
-        return validationLayers.All(availableLayerNames.Contains);
     }
 
     private void PopulateDebugMessengerCreateInfo(ref DebugUtilsMessengerCreateInfoEXT createInfo)
@@ -143,6 +135,45 @@ unsafe class HelloTriangleApplication
         createInfo.PfnUserCallback = (DebugUtilsMessengerCallbackFunctionEXT)DebugCallback;
     }
 
+    private void SetupDebugMessenger()
+    {
+        if (!EnableValidationLayers) return;
+        if (!vk.TryGetInstanceExtension(instance, out debugUtils)) return;
+
+        DebugUtilsMessengerCreateInfoEXT createInfo = new();
+        PopulateDebugMessengerCreateInfo(ref createInfo);
+
+        if (debugUtils.CreateDebugUtilsMessenger(instance, in createInfo, null, out debugMessenger) != Result.Success)
+        {
+            throw new Exception("failed to set up debug messenger!");
+        }
+    }
+
+    private string[] GetRequiredExtensions()
+    {
+        var glfwExtensions = window!.VkSurface!.GetRequiredExtensions(out var glfwExtensionCount);
+        var extensions = SilkMarshal.PtrToStringArray((nint)glfwExtensions, (int)glfwExtensionCount);
+
+        if (EnableValidationLayers)
+        {
+            return extensions.Append(ExtDebugUtils.ExtensionName).ToArray();
+        }
+
+        return extensions;
+    }
+
+    private bool CheckValidationLayerSupport()
+    {
+        uint layerCount = 0;
+        vk!.EnumerateInstanceLayerProperties(ref layerCount, null);
+        var availableLayers = new LayerProperties[layerCount];
+        vk!.EnumerateInstanceLayerProperties(ref layerCount, ref availableLayers[0]);
+
+        var availableLayerNames = availableLayers.Select(layer => Marshal.PtrToStringAnsi((IntPtr)layer.LayerName)).ToHashSet();
+
+        return validationLayers.All(availableLayerNames.Contains);
+    }
+
     private uint DebugCallback(DebugUtilsMessageSeverityFlagsEXT messageSeverity, DebugUtilsMessageTypeFlagsEXT messageTypes, DebugUtilsMessengerCallbackDataEXT* pCallbackData, void* pUserData)
     {
         Console.WriteLine($"validation layer:" + Marshal.PtrToStringAnsi((nint)pCallbackData->PMessage));
@@ -152,11 +183,11 @@ unsafe class HelloTriangleApplication
 
     private void MainLoop()
     {
-        window!.Render += OnRender;
+        window!.Render += DrawFrame;
         window!.Run();
     }
 
-    private void OnRender(double obj)
+    private void DrawFrame(double obj)
     {
 
     }

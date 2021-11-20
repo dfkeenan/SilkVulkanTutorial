@@ -89,11 +89,11 @@ unsafe class HelloTriangleApplication
 
     private void MainLoop()
     {
-        window!.Render += OnRender;
+        window!.Render += DrawFrame;
         window!.Run();
     }
 
-    private void OnRender(double obj)
+    private void DrawFrame(double obj)
     {
 
     }
