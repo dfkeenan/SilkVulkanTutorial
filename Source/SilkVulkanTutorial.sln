@@ -9,6 +9,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "01_InstanceCreation", "01_I
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "02_ValidationLayers", "02_ValidationLayers\02_ValidationLayers.csproj", "{84592EC9-B68B-45A3-AAA7-4744DDC3E9ED}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "03_PhysicalDeviceSelection", "03_PhysicalDeviceSelection\03_PhysicalDeviceSelection.csproj", "{42D8754A-E5DD-42AC-82B6-A463C5BEAB07}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -27,6 +29,10 @@ Global
 		{84592EC9-B68B-45A3-AAA7-4744DDC3E9ED}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{84592EC9-B68B-45A3-AAA7-4744DDC3E9ED}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{84592EC9-B68B-45A3-AAA7-4744DDC3E9ED}.Release|Any CPU.Build.0 = Release|Any CPU
+		{42D8754A-E5DD-42AC-82B6-A463C5BEAB07}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{42D8754A-E5DD-42AC-82B6-A463C5BEAB07}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{42D8754A-E5DD-42AC-82B6-A463C5BEAB07}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{42D8754A-E5DD-42AC-82B6-A463C5BEAB07}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
