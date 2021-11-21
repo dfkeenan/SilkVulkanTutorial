@@ -17,7 +17,7 @@ unsafe class HelloTriangleApplication
     const int WIDTH = 800;
     const int HEIGHT = 600;
 
-    bool EnableValidationLayers = false;
+    bool EnableValidationLayers = true;
 
     private readonly string[] validationLayers = new []
     {
