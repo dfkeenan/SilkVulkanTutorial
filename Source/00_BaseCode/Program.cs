@@ -39,6 +39,7 @@ unsafe class HelloTriangleApplication
             throw new Exception("Windowing platform doesn't support Vulkan.");
         }
     }
+
     private void InitVulkan()
     {
         
@@ -46,17 +47,11 @@ unsafe class HelloTriangleApplication
 
     private void MainLoop()
     {
-        window!.Render += DrawFrame;
         window!.Run();
     }
 
-    private void DrawFrame(double obj)
-    {
-        
-    }
-
     private void CleanUp()
-    {       
+    {
         window?.Dispose();
     }
 }

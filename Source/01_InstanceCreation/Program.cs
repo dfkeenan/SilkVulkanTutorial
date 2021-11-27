@@ -17,6 +17,7 @@ unsafe class HelloTriangleApplication
 
     private IWindow? window;
     private Vk? vk;
+
     private Instance instance;
 
     public void Run()
@@ -44,9 +45,23 @@ unsafe class HelloTriangleApplication
             throw new Exception("Windowing platform doesn't support Vulkan.");
         }
     }
+
     private void InitVulkan()
     {
         CreateInstance();
+    }
+
+    private void MainLoop()
+    {
+        window!.Run();
+    }
+
+    private void CleanUp()
+    {
+        vk?.DestroyInstance(instance, null);
+        vk?.Dispose();
+
+        window?.Dispose();
     }
 
     private void CreateInstance()
@@ -85,23 +100,5 @@ unsafe class HelloTriangleApplication
 
         Marshal.FreeHGlobal((nint)appInfo.PApplicationName);
         Marshal.FreeHGlobal((nint)appInfo.PEngineName);
-    }
-
-    private void MainLoop()
-    {
-        window!.Render += DrawFrame;
-        window!.Run();
-    }
-
-    private void DrawFrame(double obj)
-    {
-
-    }
-
-    private void CleanUp()
-    {
-        vk?.DestroyInstance(instance, null);
-        vk?.Dispose();
-        window?.Dispose();
     }
 }

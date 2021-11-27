@@ -26,11 +26,15 @@ unsafe class HelloTriangleApplication
 
     private IWindow? window;
     private Vk? vk;
+
     private Instance instance;
+
     private ExtDebugUtils? debugUtils;
     private DebugUtilsMessengerEXT debugMessenger;
+
     private PhysicalDevice physicalDevice;
     private Device device;
+
     private Queue graphicsQueue;
 
     public void Run()
@@ -58,12 +62,33 @@ unsafe class HelloTriangleApplication
             throw new Exception("Windowing platform doesn't support Vulkan.");
         }
     }
+
     private void InitVulkan()
     {
         CreateInstance();
         SetupDebugMessenger();
         PickPhysicalDevice();
         CreateLogicalDevice();
+    }
+
+    private void MainLoop()
+    {
+        window!.Run();
+    }
+
+    private void CleanUp()
+    {
+        vk!.DestroyDevice(device, null);
+
+        if (EnableValidationLayers)
+        {
+            //DestroyDebugUtilsMessenger equivilant to method DestroyDebugUtilsMessengerEXT from original tutorial.
+            debugUtils!.DestroyDebugUtilsMessenger(instance, debugMessenger, null);
+        }
+
+        vk?.DestroyInstance(instance, null);
+        vk?.Dispose();
+        window?.Dispose();
     }
 
     private void CreateInstance()
@@ -275,7 +300,6 @@ unsafe class HelloTriangleApplication
         }
     }
 
-
     private string[] GetRequiredExtensions()
     {
         var glfwExtensions = window!.VkSurface!.GetRequiredExtensions(out var glfwExtensionCount);
@@ -306,31 +330,5 @@ unsafe class HelloTriangleApplication
         Console.WriteLine($"validation layer:" + Marshal.PtrToStringAnsi((nint)pCallbackData->PMessage));
 
         return Vk.False;
-    }
-
-    private void MainLoop()
-    {
-        window!.Render += DrawFrame;
-        window!.Run();
-    }
-
-    private void DrawFrame(double obj)
-    {
-
-    }
-
-    private void CleanUp()
-    {
-        vk!.DestroyDevice(device, null);
-
-        if (EnableValidationLayers)
-        {
-            //DestroyDebugUtilsMessenger equivilant to method DestroyDebugUtilsMessengerEXT from original tutorial.
-            debugUtils!.DestroyDebugUtilsMessenger(instance, debugMessenger, null);
-        }
-
-        vk?.DestroyInstance(instance, null);
-        vk?.Dispose();
-        window?.Dispose();
     }
 }

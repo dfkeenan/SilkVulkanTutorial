@@ -26,7 +26,9 @@ unsafe class HelloTriangleApplication
 
     private IWindow? window;
     private Vk? vk;
+
     private Instance instance;
+
     private ExtDebugUtils? debugUtils;
     private DebugUtilsMessengerEXT debugMessenger;
 
@@ -55,10 +57,30 @@ unsafe class HelloTriangleApplication
             throw new Exception("Windowing platform doesn't support Vulkan.");
         }
     }
+
     private void InitVulkan()
     {
         CreateInstance();
         SetupDebugMessenger();
+    }
+
+    private void MainLoop()
+    {
+        window!.Run();
+    }
+
+    private void CleanUp()
+    {
+        if (EnableValidationLayers)
+        {
+            //DestroyDebugUtilsMessenger equivilant to method DestroyDebugUtilsMessengerEXT from original tutorial.
+            debugUtils!.DestroyDebugUtilsMessenger(instance, debugMessenger, null);
+        }
+
+        vk?.DestroyInstance(instance, null);
+        vk?.Dispose();
+
+        window?.Dispose();
     }
 
     private void CreateInstance()
@@ -181,29 +203,5 @@ unsafe class HelloTriangleApplication
         Console.WriteLine($"validation layer:" + Marshal.PtrToStringAnsi((nint)pCallbackData->PMessage));
 
         return Vk.False;
-    }
-
-    private void MainLoop()
-    {
-        window!.Render += DrawFrame;
-        window!.Run();
-    }
-
-    private void DrawFrame(double obj)
-    {
-
-    }
-
-    private void CleanUp()
-    {
-        if (EnableValidationLayers)
-        {
-            //DestroyDebugUtilsMessenger equivilant to method DestroyDebugUtilsMessengerEXT from original tutorial.
-            debugUtils!.DestroyDebugUtilsMessenger(instance, debugMessenger, null);
-        }
-
-        vk?.DestroyInstance(instance, null);
-        vk?.Dispose();
-        window?.Dispose();
     }
 }
