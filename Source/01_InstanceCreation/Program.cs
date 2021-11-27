@@ -58,8 +58,8 @@ unsafe class HelloTriangleApplication
 
     private void CleanUp()
     {
-        vk?.DestroyInstance(instance, null);
-        vk?.Dispose();
+        vk!.DestroyInstance(instance, null);
+        vk!.Dispose();
 
         window?.Dispose();
     }
@@ -90,12 +90,9 @@ unsafe class HelloTriangleApplication
         createInfo.PpEnabledExtensionNames = glfwExtensions;
         createInfo.EnabledLayerCount = 0;
 
-        fixed (Instance* i = &instance)
+        if (vk.CreateInstance(createInfo, null, out instance) != Result.Success)
         {
-            if (vk.CreateInstance(&createInfo, null, i) != Result.Success)
-            {
-                throw new Exception("failed to create instance!");
-            }
+            throw new Exception("failed to create instance!");
         }
 
         Marshal.FreeHGlobal((nint)appInfo.PApplicationName);

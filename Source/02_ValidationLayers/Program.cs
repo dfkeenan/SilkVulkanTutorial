@@ -77,8 +77,8 @@ unsafe class HelloTriangleApplication
             debugUtils!.DestroyDebugUtilsMessenger(instance, debugMessenger, null);
         }
 
-        vk?.DestroyInstance(instance, null);
-        vk?.Dispose();
+        vk!.DestroyInstance(instance, null);
+        vk!.Dispose();
 
         window?.Dispose();
     }
@@ -127,12 +127,9 @@ unsafe class HelloTriangleApplication
             createInfo.PNext = null;
         }
 
-        fixed (Instance* i = &instance)
+        if (vk.CreateInstance(createInfo, null, out instance) != Result.Success)
         {
-            if (vk.CreateInstance(&createInfo, null, i) != Result.Success)
-            {
-                throw new Exception("failed to create instance!");
-            }
+            throw new Exception("failed to create instance!");
         }
 
         Marshal.FreeHGlobal((nint)appInfo.PApplicationName);
