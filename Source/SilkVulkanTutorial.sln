@@ -13,6 +13,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "03_PhysicalDeviceSelection"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "04_LogicalDevice", "04_LogicalDevice\04_LogicalDevice.csproj", "{B64E207A-9B80-4E47-B623-CE0F3EE0F1BD}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "05_WindowSurface", "05_WindowSurface\05_WindowSurface.csproj", "{C4218416-ADEF-482E-89C6-BF1FB17B63E7}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -39,6 +41,10 @@ Global
 		{B64E207A-9B80-4E47-B623-CE0F3EE0F1BD}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{B64E207A-9B80-4E47-B623-CE0F3EE0F1BD}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{B64E207A-9B80-4E47-B623-CE0F3EE0F1BD}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C4218416-ADEF-482E-89C6-BF1FB17B63E7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C4218416-ADEF-482E-89C6-BF1FB17B63E7}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C4218416-ADEF-482E-89C6-BF1FB17B63E7}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C4218416-ADEF-482E-89C6-BF1FB17B63E7}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
