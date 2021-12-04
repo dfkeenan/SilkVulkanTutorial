@@ -72,6 +72,7 @@ unsafe class HelloTriangleApplication
     private Extent2D swapChainExtent;
     private ImageView[] swapChainImageViews = new ImageView[0];
 
+    private RenderPass renderPass;
     private PipelineLayout pipelineLayout;
 
     public void Run()
@@ -109,6 +110,7 @@ unsafe class HelloTriangleApplication
         CreateLogicalDevice();
         CreateSwapChain();
         CreateImageViews();
+        CreateRenderPass();
         CreateGraphicsPipeline();
     }
 
@@ -120,6 +122,7 @@ unsafe class HelloTriangleApplication
     private void CleanUp()
     {
         vk!.DestroyPipelineLayout(device, pipelineLayout, null);
+        vk!.DestroyRenderPass(device, renderPass, null);
 
         foreach (var imageView in swapChainImageViews)
         {
@@ -438,6 +441,47 @@ unsafe class HelloTriangleApplication
             {
                 throw new Exception("failed to create image views!");
             }
+        }
+    }
+
+    private void CreateRenderPass()
+    {
+        AttachmentDescription colorAttachment = new()
+        {
+            Format = swapChainImageFormat,
+            Samples = SampleCountFlags.SampleCount1Bit,
+            LoadOp = AttachmentLoadOp.Clear,
+            StoreOp = AttachmentStoreOp.Store,
+            StencilLoadOp = AttachmentLoadOp.DontCare,
+            InitialLayout = ImageLayout.Undefined,
+            FinalLayout = ImageLayout.PresentSrcKhr,
+        };
+
+        AttachmentReference colorAttachmentRef = new()
+        {
+            Attachment = 0,
+            Layout = ImageLayout.ColorAttachmentOptimal,
+        };
+
+        SubpassDescription subpass = new()
+        {
+            PipelineBindPoint = PipelineBindPoint.Graphics,
+            ColorAttachmentCount = 1,
+            PColorAttachments = &colorAttachmentRef,
+        };
+
+        RenderPassCreateInfo renderPassInfo = new() 
+        { 
+            SType = StructureType.RenderPassCreateInfo,
+            AttachmentCount = 1,
+            PAttachments = &colorAttachment,
+            SubpassCount = 1,
+            PSubpasses = &subpass,
+        };
+
+        if(vk!.CreateRenderPass(device, renderPassInfo, null, out renderPass) != Result.Success)
+        {
+            throw new Exception("failed to create render pass!");
         }
     }
 
