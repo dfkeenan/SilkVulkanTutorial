@@ -510,8 +510,6 @@ unsafe class HelloTriangleApplication
             PName = (byte*)SilkMarshal.StringToPtr("main")
         };
 
-        SilkMarshal.Free((nint)vertShaderStageInfo.PName);
-
         PipelineShaderStageCreateInfo fragShaderStageInfo = new()
         {
             SType = StructureType.PipelineShaderStageCreateInfo,
