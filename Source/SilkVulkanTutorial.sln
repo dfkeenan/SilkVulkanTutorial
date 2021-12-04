@@ -17,6 +17,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "05_WindowSurface", "05_Wind
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "06_SwapChainCreation", "06_SwapChainCreation\06_SwapChainCreation.csproj", "{21C07CC2-1363-4DDE-B8A2-B17916A6027A}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "07_ImageViews", "07_ImageViews\07_ImageViews.csproj", "{C491CD74-99BC-4A54-AC83-338428BCA1BA}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -51,6 +53,10 @@ Global
 		{21C07CC2-1363-4DDE-B8A2-B17916A6027A}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{21C07CC2-1363-4DDE-B8A2-B17916A6027A}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{21C07CC2-1363-4DDE-B8A2-B17916A6027A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C491CD74-99BC-4A54-AC83-338428BCA1BA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C491CD74-99BC-4A54-AC83-338428BCA1BA}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C491CD74-99BC-4A54-AC83-338428BCA1BA}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C491CD74-99BC-4A54-AC83-338428BCA1BA}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
