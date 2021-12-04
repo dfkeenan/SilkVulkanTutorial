@@ -511,7 +511,7 @@ unsafe class HelloTriangleApplication
             PName = (byte*)SilkMarshal.StringToPtr("main")
         };
 
-        var shaderStages = new[]
+        var shaderStages = stackalloc []
         {
             vertShaderStageInfo,
             fragShaderStageInfo
