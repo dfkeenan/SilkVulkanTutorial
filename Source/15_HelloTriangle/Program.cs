@@ -9,7 +9,7 @@ using Silk.NET.Vulkan;
 using Silk.NET.Vulkan.Extensions.EXT;
 using Silk.NET.Vulkan.Extensions.KHR;
 using Silk.NET.Windowing;
-
+using Semaphore = Silk.NET.Vulkan.Semaphore;
 
 var app = new HelloTriangleApplication();
 app.Run();
@@ -36,6 +36,8 @@ unsafe class HelloTriangleApplication
 {
     const int WIDTH = 800;
     const int HEIGHT = 600;
+
+    const int MAX_FRAMES_IN_FLIGHT = 2;
 
     bool EnableValidationLayers = true;
 
@@ -80,6 +82,12 @@ unsafe class HelloTriangleApplication
     private CommandPool commandPool;
     private CommandBuffer[] commandBuffers = new CommandBuffer[0];
 
+    Semaphore[] imageAvailableSemaphores = new Semaphore[0];
+    Semaphore[] renderFinishedSemaphores = new Semaphore[0];
+    Fence[] inFlightFences = new Fence[0];
+    Fence[] imagesInFlight = new Fence[0];
+    int currentFrame = 0;
+
     public void Run()
     {
         InitWindow();
@@ -120,15 +128,25 @@ unsafe class HelloTriangleApplication
         CreateFramebuffers();
         CreateCommandPool();
         CreateCommandBuffers();
+        CreateSyncObjects();
     }
 
     private void MainLoop()
     {
+        window!.Render += DrawFrame;
         window!.Run();
+        vk!.DeviceWaitIdle(device);
     }
 
     private void CleanUp()
     {
+        for (int i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
+        {
+            vk!.DestroySemaphore(device, renderFinishedSemaphores[i], null);
+            vk!.DestroySemaphore(device, imageAvailableSemaphores[i], null);
+            vk!.DestroyFence(device, inFlightFences[i], null);
+        }
+
         vk!.DestroyCommandPool(device, commandPool, null);
 
         foreach (var framebuffer in swapChainFramebuffers)
@@ -486,6 +504,16 @@ unsafe class HelloTriangleApplication
             PColorAttachments = &colorAttachmentRef,
         };
 
+        SubpassDependency dependency = new()
+        {
+            SrcSubpass = Vk.SubpassExternal,
+            DstSubpass = 0,
+            SrcStageMask = PipelineStageFlags.PipelineStageColorAttachmentOutputBit,
+            SrcAccessMask = 0,
+            DstStageMask = PipelineStageFlags.PipelineStageColorAttachmentOutputBit,
+            DstAccessMask = AccessFlags.AccessColorAttachmentWriteBit
+        };
+
         RenderPassCreateInfo renderPassInfo = new() 
         { 
             SType = StructureType.RenderPassCreateInfo,
@@ -493,6 +521,8 @@ unsafe class HelloTriangleApplication
             PAttachments = &colorAttachment,
             SubpassCount = 1,
             PSubpasses = &subpass,
+            DependencyCount = 1,
+            PDependencies = &dependency,
         };
 
         if(vk!.CreateRenderPass(device, renderPassInfo, null, out renderPass) != Result.Success)
@@ -756,6 +786,102 @@ unsafe class HelloTriangleApplication
             }
 
         }
+    }
+
+    private void CreateSyncObjects()
+    {
+        imageAvailableSemaphores = new Semaphore[MAX_FRAMES_IN_FLIGHT];
+        renderFinishedSemaphores = new Semaphore[MAX_FRAMES_IN_FLIGHT];
+        inFlightFences = new Fence[MAX_FRAMES_IN_FLIGHT];
+        imagesInFlight = new Fence[swapChainImages.Length];
+
+        SemaphoreCreateInfo semaphoreInfo = new()
+        {
+            SType = StructureType.SemaphoreCreateInfo,
+        };
+
+        FenceCreateInfo fenceInfo = new()
+        {
+            SType = StructureType.FenceCreateInfo,
+            Flags = FenceCreateFlags.FenceCreateSignaledBit,
+        };
+
+        for (var i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
+        {
+            if (vk!.CreateSemaphore(device, semaphoreInfo, null, out imageAvailableSemaphores[i]) != Result.Success ||
+                vk!.CreateSemaphore(device, semaphoreInfo, null, out renderFinishedSemaphores[i]) != Result.Success ||
+                vk!.CreateFence(device, fenceInfo, null, out inFlightFences[i]) != Result.Success)
+            {
+                throw new Exception("failed to create synchronization objects for a frame!");
+            }
+        }
+    }
+
+    private void DrawFrame(double delta)
+    {
+        vk!.WaitForFences(device, 1, inFlightFences[currentFrame], true, ulong.MaxValue);
+
+        uint imageIndex = 0;
+        khrSwapChain!.AcquireNextImage(device, swapChain, ulong.MaxValue, imageAvailableSemaphores[currentFrame], default, ref imageIndex);
+
+        if(imagesInFlight[imageIndex].Handle != default)
+        {
+            vk!.WaitForFences(device, 1, imagesInFlight[imageIndex], true, ulong.MaxValue);
+        }
+        imagesInFlight[imageIndex] = inFlightFences[currentFrame];
+
+        SubmitInfo submitInfo = new()
+        {
+            SType = StructureType.SubmitInfo,
+        };
+
+        var waitSemaphores = stackalloc [] {imageAvailableSemaphores[currentFrame]};
+        var waitStages = stackalloc [] { PipelineStageFlags.PipelineStageColorAttachmentOutputBit };
+
+        var buffer = commandBuffers[imageIndex];
+
+        submitInfo = submitInfo with 
+        { 
+            WaitSemaphoreCount = 1,
+            PWaitSemaphores = waitSemaphores,
+            PWaitDstStageMask = waitStages,
+            
+            CommandBufferCount = 1,
+            PCommandBuffers = &buffer
+        };
+
+        var signalSemaphores = stackalloc[] { renderFinishedSemaphores[currentFrame] };
+        submitInfo = submitInfo with
+        {
+            SignalSemaphoreCount = 1,
+            PSignalSemaphores = signalSemaphores,
+        };
+
+        vk!.ResetFences(device, 1,inFlightFences[currentFrame]);
+
+        if(vk!.QueueSubmit(graphicsQueue, 1, submitInfo, inFlightFences[currentFrame]) != Result.Success)
+        {
+            throw new Exception("failed to submit draw command buffer!");
+        }
+
+        var swapChains = stackalloc[] { swapChain };
+        PresentInfoKHR presentInfo = new()
+        {
+            SType = StructureType.PresentInfoKhr,
+
+            WaitSemaphoreCount = 1,
+            PWaitSemaphores = signalSemaphores,
+
+            SwapchainCount = 1,
+            PSwapchains = swapChains,
+
+            PImageIndices = &imageIndex
+        };
+
+        khrSwapChain.QueuePresent(presentQueue, presentInfo);
+
+        currentFrame = (currentFrame + 1) % MAX_FRAMES_IN_FLIGHT;
+
     }
 
     private ShaderModule CreateShaderModule(byte[] code)
