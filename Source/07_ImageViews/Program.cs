@@ -70,6 +70,7 @@ unsafe class HelloTriangleApplication
     private Image[] swapChainImages = new Image[0];
     private Format swapChainImageFormat;
     private Extent2D swapChainExtent;
+    private ImageView[] swapChainImageViews = new ImageView[0];
 
     public void Run()
     {
@@ -105,6 +106,7 @@ unsafe class HelloTriangleApplication
         PickPhysicalDevice();
         CreateLogicalDevice();
         CreateSwapChain();
+        CreateImageViews();
     }
 
     private void MainLoop()
@@ -114,6 +116,11 @@ unsafe class HelloTriangleApplication
 
     private void CleanUp()
     {
+        foreach (var imageView in swapChainImageViews)
+        {
+            vk!.DestroyImageView(device, imageView, null);
+        }
+
         khrSwapChain!.DestroySwapchain(device, swapChain, null);
 
         vk!.DestroyDevice(device, null);
@@ -390,6 +397,43 @@ unsafe class HelloTriangleApplication
 
         swapChainImageFormat = surfaceFormat.Format;
         swapChainExtent = extent;
+    }
+
+    private void CreateImageViews()
+    {
+        Array.Resize(ref swapChainImageViews, swapChainImages.Length);
+
+        for (int i = 0; i < swapChainImages.Length; i++)
+        {
+            ImageViewCreateInfo createInfo = new()
+            {
+                SType = StructureType.ImageViewCreateInfo,
+                Image = swapChainImages[i],
+                ViewType = ImageViewType.ImageViewType2D,
+                Format = swapChainImageFormat,
+                Components =
+                {
+                    R = ComponentSwizzle.Identity,
+                    G = ComponentSwizzle.Identity,
+                    B = ComponentSwizzle.Identity,
+                    A = ComponentSwizzle.Identity,
+                },
+                SubresourceRange =
+                {
+                    AspectMask = ImageAspectFlags.ImageAspectColorBit,
+                    BaseMipLevel = 0,
+                    LevelCount = 1,
+                    BaseArrayLayer = 0,
+                    LayerCount = 1,
+                }
+
+            };
+
+            if(vk!.CreateImageView(device, createInfo, null, out swapChainImageViews[i]) != Result.Success)
+            {
+                throw new Exception("failed to create image views!");
+            }
+        }
     }
 
     private SurfaceFormatKHR ChooseSwapSurfaceFormat(IReadOnlyList<SurfaceFormatKHR> availableFormats)
