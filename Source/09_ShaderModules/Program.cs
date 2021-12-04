@@ -439,6 +439,62 @@ unsafe class HelloTriangleApplication
 
     private void CreateGraphicsPipeline()
     {
+        var vertShaderCode = File.ReadAllBytes("shaders/vert.spv");
+        var fragShaderCode = File.ReadAllBytes("shaders/frag.spv");
+
+        var vertShaderModule = CreateShaderModule(vertShaderCode);
+        var fragShaderModule = CreateShaderModule(fragShaderCode);
+
+        PipelineShaderStageCreateInfo vertShaderStageInfo = new()
+        {
+            SType = StructureType.PipelineShaderStageCreateInfo,
+            Stage = ShaderStageFlags.ShaderStageVertexBit,
+            Module = vertShaderModule,
+            PName = (byte*)SilkMarshal.StringToPtr("main")
+        };
+
+        SilkMarshal.Free((nint)vertShaderStageInfo.PName);
+
+        PipelineShaderStageCreateInfo fragShaderStageInfo = new()
+        {
+            SType = StructureType.PipelineShaderStageCreateInfo,
+            Stage = ShaderStageFlags.ShaderStageFragmentBit,
+            Module = fragShaderModule,
+            PName = (byte*)SilkMarshal.StringToPtr("main")
+        };
+
+        var shaderStages = new[]
+        {
+            vertShaderStageInfo,
+            fragShaderStageInfo
+        };
+
+        vk!.DestroyShaderModule(device, fragShaderModule, null);
+        vk!.DestroyShaderModule(device, vertShaderModule, null);
+
+        SilkMarshal.Free((nint)vertShaderStageInfo.PName);
+        SilkMarshal.Free((nint)fragShaderStageInfo.PName);
+    }
+
+    private ShaderModule CreateShaderModule(byte[] code)
+    {
+        ShaderModuleCreateInfo createInfo = new()
+        {
+            SType = StructureType.ShaderModuleCreateInfo,
+            CodeSize = (nuint)code.Length,
+        };
+        fixed (byte* codePtr = code)
+        {
+            createInfo.PCode = (uint*)codePtr;
+        }
+
+        ShaderModule shaderModule;
+        if (vk!.CreateShaderModule(device, createInfo, null, out shaderModule) != Result.Success)
+        {
+            throw new Exception();
+        }
+
+        return shaderModule;
 
     }
 
