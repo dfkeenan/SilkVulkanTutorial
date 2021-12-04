@@ -72,6 +72,8 @@ unsafe class HelloTriangleApplication
     private Extent2D swapChainExtent;
     private ImageView[] swapChainImageViews = new ImageView[0];
 
+    private PipelineLayout pipelineLayout;
+
     public void Run()
     {
         InitWindow();
@@ -117,6 +119,8 @@ unsafe class HelloTriangleApplication
 
     private void CleanUp()
     {
+        vk!.DestroyPipelineLayout(device, pipelineLayout, null);
+
         foreach (var imageView in swapChainImageViews)
         {
             vk!.DestroyImageView(device, imageView, null);
@@ -468,6 +472,97 @@ unsafe class HelloTriangleApplication
             vertShaderStageInfo,
             fragShaderStageInfo
         };
+
+        PipelineVertexInputStateCreateInfo vertexInputInfo = new()
+        {
+            SType = StructureType.PipelineVertexInputStateCreateInfo,
+            VertexBindingDescriptionCount = 0,
+            VertexAttributeDescriptionCount = 0,
+        };
+
+        PipelineInputAssemblyStateCreateInfo inputAssembly = new()
+        {
+            SType = StructureType.PipelineInputAssemblyStateCreateInfo,
+            Topology = PrimitiveTopology.TriangleList,
+            PrimitiveRestartEnable = false,
+        };
+
+        Viewport viewport = new()
+        {
+            X = 0,
+            Y = 0,
+            Width = swapChainExtent.Width,
+            Height = swapChainExtent.Height,
+            MinDepth = 0,
+            MaxDepth = 1,
+        };
+
+        Rect2D scissor = new()
+        {
+            Offset = { X = 0, Y = 0 },
+            Extent = swapChainExtent,
+        };
+
+        PipelineViewportStateCreateInfo viewportState = new()
+        {
+            SType = StructureType.PipelineViewportStateCreateInfo,
+            ViewportCount = 1,
+            PViewports = &viewport,
+            ScissorCount = 1,
+            PScissors = &scissor,
+        };
+
+        PipelineRasterizationStateCreateInfo rasterizer = new()
+        {
+            SType = StructureType.PipelineRasterizationStateCreateInfo,
+            DepthClampEnable = false,
+            RasterizerDiscardEnable = false,
+            PolygonMode = PolygonMode.Fill,
+            LineWidth = 1,
+            CullMode = CullModeFlags.CullModeBackBit,
+            FrontFace = FrontFace.Clockwise,
+            DepthBiasEnable = false,
+        };
+
+        PipelineMultisampleStateCreateInfo multisampling = new()
+        {
+            SType = StructureType.PipelineMultisampleStateCreateInfo,
+            SampleShadingEnable = false,
+            RasterizationSamples = SampleCountFlags.SampleCount1Bit,
+        };
+
+        PipelineColorBlendAttachmentState colorBlendAttachment = new()
+        {
+            ColorWriteMask = ColorComponentFlags.ColorComponentRBit | ColorComponentFlags.ColorComponentGBit | ColorComponentFlags.ColorComponentBBit | ColorComponentFlags.ColorComponentABit,
+            BlendEnable = false,
+        };
+
+        PipelineColorBlendStateCreateInfo colorBlending = new()
+        {
+            SType = StructureType.PipelineColorBlendStateCreateInfo,
+            LogicOpEnable = false,
+            LogicOp = LogicOp.Copy,
+            AttachmentCount = 1,
+            PAttachments = &colorBlendAttachment,
+        };
+
+        colorBlending.BlendConstants[0] = 0;
+        colorBlending.BlendConstants[1] = 0;
+        colorBlending.BlendConstants[2] = 0;
+        colorBlending.BlendConstants[3] = 0;
+
+        PipelineLayoutCreateInfo pipelineLayoutInfo = new()
+        {
+            SType = StructureType.PipelineLayoutCreateInfo,
+            SetLayoutCount = 0,
+            PushConstantRangeCount = 0,
+        };
+
+        if(vk!.CreatePipelineLayout(device, pipelineLayoutInfo, null, out pipelineLayout) != Result.Success)
+        {
+            throw new Exception("failed to create pipeline layout!");
+        }
+
 
         vk!.DestroyShaderModule(device, fragShaderModule, null);
         vk!.DestroyShaderModule(device, vertShaderModule, null);
