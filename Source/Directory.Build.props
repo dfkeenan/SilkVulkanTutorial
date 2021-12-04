@@ -1,0 +1,6 @@
+<Project>
+ <PropertyGroup>
+	 <VulkanBinPath>$(VULKAN_SDK)\Bin</VulkanBinPath>
+	 <ShaderOutputPath>Shaders</ShaderOutputPath>
+ </PropertyGroup>
+</Project>
