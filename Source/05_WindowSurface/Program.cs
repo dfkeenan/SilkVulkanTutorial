@@ -288,6 +288,11 @@ unsafe class HelloTriangleApplication
 
         vk!.GetDeviceQueue(device, indicies.GraphicsFamily!.Value, 0, out graphicsQueue);
         vk!.GetDeviceQueue(device, indicies.PresentFamily!.Value, 0, out presentQueue);
+
+        if (EnableValidationLayers)
+        {
+            SilkMarshal.Free((nint)createInfo.PpEnabledLayerNames);
+        }
     }
 
     private bool IsDeviceSuitable(PhysicalDevice device)
