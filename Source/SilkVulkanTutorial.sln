@@ -15,6 +15,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "04_LogicalDevice", "04_Logi
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "05_WindowSurface", "05_WindowSurface\05_WindowSurface.csproj", "{C4218416-ADEF-482E-89C6-BF1FB17B63E7}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "06_SwapChainCreation", "06_SwapChainCreation\06_SwapChainCreation.csproj", "{21C07CC2-1363-4DDE-B8A2-B17916A6027A}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -45,6 +47,10 @@ Global
 		{C4218416-ADEF-482E-89C6-BF1FB17B63E7}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{C4218416-ADEF-482E-89C6-BF1FB17B63E7}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{C4218416-ADEF-482E-89C6-BF1FB17B63E7}.Release|Any CPU.Build.0 = Release|Any CPU
+		{21C07CC2-1363-4DDE-B8A2-B17916A6027A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{21C07CC2-1363-4DDE-B8A2-B17916A6027A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{21C07CC2-1363-4DDE-B8A2-B17916A6027A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{21C07CC2-1363-4DDE-B8A2-B17916A6027A}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
