@@ -107,6 +107,7 @@ unsafe class HelloTriangleApplication
         CreateLogicalDevice();
         CreateSwapChain();
         CreateImageViews();
+        CreateGraphicsPipeline();
     }
 
     private void MainLoop()
@@ -434,6 +435,11 @@ unsafe class HelloTriangleApplication
                 throw new Exception("failed to create image views!");
             }
         }
+    }
+
+    private void CreateGraphicsPipeline()
+    {
+
     }
 
     private SurfaceFormatKHR ChooseSwapSurfaceFormat(IReadOnlyList<SurfaceFormatKHR> availableFormats)
