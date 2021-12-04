@@ -74,6 +74,7 @@ unsafe class HelloTriangleApplication
 
     private RenderPass renderPass;
     private PipelineLayout pipelineLayout;
+    private Pipeline graphicsPipeline;
 
     public void Run()
     {
@@ -121,6 +122,7 @@ unsafe class HelloTriangleApplication
 
     private void CleanUp()
     {
+        vk!.DestroyPipeline(device, graphicsPipeline, null);
         vk!.DestroyPipelineLayout(device, pipelineLayout, null);
         vk!.DestroyRenderPass(device, renderPass, null);
 
@@ -511,7 +513,7 @@ unsafe class HelloTriangleApplication
             PName = (byte*)SilkMarshal.StringToPtr("main")
         };
 
-        var shaderStages = new[]
+        var shaderStages = stackalloc []
         {
             vertShaderStageInfo,
             fragShaderStageInfo
@@ -605,7 +607,29 @@ unsafe class HelloTriangleApplication
         if(vk!.CreatePipelineLayout(device, pipelineLayoutInfo, null, out pipelineLayout) != Result.Success)
         {
             throw new Exception("failed to create pipeline layout!");
-        }
+        }        
+
+        GraphicsPipelineCreateInfo pipelineInfo = new()
+        {
+            SType = StructureType.GraphicsPipelineCreateInfo,
+            StageCount = 2,
+            PStages = shaderStages,
+            PVertexInputState = &vertexInputInfo,
+            PInputAssemblyState = &inputAssembly,
+            PViewportState = &viewportState,
+            PRasterizationState = &rasterizer,
+            PMultisampleState = &multisampling,
+            PColorBlendState = &colorBlending,
+            Layout = pipelineLayout,
+            RenderPass = renderPass,
+            Subpass = 0,
+            BasePipelineHandle = default
+        };
+
+        if(vk!.CreateGraphicsPipelines(device, default, 1, pipelineInfo, null, out graphicsPipeline) != Result.Success)
+        {
+            throw new Exception("failed to create graphics pipeline!");
+        }  
 
 
         vk!.DestroyShaderModule(device, fragShaderModule, null);
