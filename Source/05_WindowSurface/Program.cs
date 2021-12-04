@@ -14,6 +14,17 @@ using Silk.NET.Windowing;
 var app = new HelloTriangleApplication();
 app.Run();
 
+struct QueueFamilyIndices
+{
+    public uint? GraphicsFamily { get; set; }
+    public uint? PresentFamily { get; set; }
+
+    public bool IsComplete()
+    {
+        return GraphicsFamily.HasValue && PresentFamily.HasValue;
+    }
+}
+
 unsafe class HelloTriangleApplication
 {
     const int WIDTH = 800;
@@ -321,17 +332,6 @@ unsafe class HelloTriangleApplication
         }
 
         return indices;
-    }
-
-    public struct QueueFamilyIndices
-    {
-        public uint? GraphicsFamily { get; set; }
-        public uint? PresentFamily { get; set; }
-
-        public bool IsComplete()
-        {
-            return GraphicsFamily.HasValue && PresentFamily.HasValue;
-        }
     }
 
     private string[] GetRequiredExtensions()
