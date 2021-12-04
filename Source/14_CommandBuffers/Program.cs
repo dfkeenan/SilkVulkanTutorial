@@ -77,6 +77,9 @@ unsafe class HelloTriangleApplication
     private PipelineLayout pipelineLayout;
     private Pipeline graphicsPipeline;
 
+    private CommandPool commandPool;
+    private CommandBuffer[] commandBuffers = new CommandBuffer[0];
+
     public void Run()
     {
         InitWindow();
@@ -115,6 +118,8 @@ unsafe class HelloTriangleApplication
         CreateRenderPass();
         CreateGraphicsPipeline();
         CreateFramebuffers();
+        CreateCommandPool();
+        CreateCommandBuffers();
     }
 
     private void MainLoop()
@@ -124,6 +129,8 @@ unsafe class HelloTriangleApplication
 
     private void CleanUp()
     {
+        vk!.DestroyCommandPool(device, commandPool, null);
+
         foreach (var framebuffer in swapChainFramebuffers)
         {
             vk!.DestroyFramebuffer(device, framebuffer, null);
@@ -510,8 +517,6 @@ unsafe class HelloTriangleApplication
             PName = (byte*)SilkMarshal.StringToPtr("main")
         };
 
-        SilkMarshal.Free((nint)vertShaderStageInfo.PName);
-
         PipelineShaderStageCreateInfo fragShaderStageInfo = new()
         {
             SType = StructureType.PipelineShaderStageCreateInfo,
@@ -669,6 +674,87 @@ unsafe class HelloTriangleApplication
             {
                 throw new Exception("failed to create framebuffer!");
             }
+        }
+    }
+
+    private void CreateCommandPool()
+    {
+        var queueFamiliyIndicies = FindQueueFamilies(physicalDevice);
+
+        CommandPoolCreateInfo poolInfo = new()
+        {
+            SType = StructureType.CommandPoolCreateInfo,
+            QueueFamilyIndex = queueFamiliyIndicies.GraphicsFamily!.Value,
+        };
+
+        if(vk!.CreateCommandPool(device, poolInfo, null,out commandPool) != Result.Success)
+        {
+            throw new Exception("failed to create command pool!");
+        }
+    }
+
+    private void CreateCommandBuffers()
+    {
+        commandBuffers = new CommandBuffer[swapChainFramebuffers.Length];
+
+        CommandBufferAllocateInfo allocInfo = new()
+        {
+            SType = StructureType.CommandBufferAllocateInfo,
+            CommandPool = commandPool,
+            Level = CommandBufferLevel.Primary,
+            CommandBufferCount = (uint)commandBuffers.Length,
+        };
+
+        if(vk!.AllocateCommandBuffers(device, allocInfo, out commandBuffers[0]) != Result.Success)
+        {
+            throw new Exception("failed to allocate command buffers!");
+        }
+
+        for (int i = 0; i < commandBuffers.Length; i++)
+        {
+            CommandBufferBeginInfo beginInfo = new()
+            {
+                SType = StructureType.CommandBufferBeginInfo,
+            };
+
+            if(vk!.BeginCommandBuffer(commandBuffers[i], beginInfo ) != Result.Success)
+            {
+                throw new Exception("failed to begin recording command buffer!");
+            }
+
+            RenderPassBeginInfo renderPassInfo = new()
+            {
+                SType= StructureType.RenderPassBeginInfo,
+                RenderPass = renderPass,
+                Framebuffer = swapChainFramebuffers[i],
+                RenderArea =
+                {
+                    Offset = { X = 0, Y = 0 }, 
+                    Extent = swapChainExtent,
+                }
+            };
+
+            ClearValue clearColor = new()
+            {
+                Color = new (){ Float32_0 = 0, Float32_1 = 0, Float32_2 = 0, Float32_3 = 1 },                
+            };
+
+            renderPassInfo.ClearValueCount = 1;
+            renderPassInfo.PClearValues = &clearColor;
+
+            vk!.CmdBeginRenderPass(commandBuffers[i], &renderPassInfo, SubpassContents.Inline);
+
+                vk!.CmdBindPipeline(commandBuffers[i], PipelineBindPoint.Graphics, graphicsPipeline);
+
+                vk!.CmdDraw(commandBuffers[i], 3, 1, 0, 0);
+
+            vk!.CmdEndRenderPass(commandBuffers[i]);
+
+            if(vk!.EndCommandBuffer(commandBuffers[i]) != Result.Success)
+            {
+                throw new Exception("failed to record command buffer!");
+            }
+
         }
     }
 
