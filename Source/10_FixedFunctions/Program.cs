@@ -192,8 +192,8 @@ unsafe class HelloTriangleApplication
             throw new Exception("failed to create instance!");
         }
 
-        Marshal.FreeHGlobal((nint)appInfo.PApplicationName);
-        Marshal.FreeHGlobal((nint)appInfo.PEngineName);
+        Marshal.FreeHGlobal((IntPtr)appInfo.PApplicationName);
+        Marshal.FreeHGlobal((IntPtr)appInfo.PEngineName);
         SilkMarshal.Free((nint)createInfo.PpEnabledExtensionNames);
 
         if (EnableValidationLayers)
