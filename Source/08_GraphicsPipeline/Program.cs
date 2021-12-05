@@ -67,10 +67,10 @@ unsafe class HelloTriangleApplication
 
     private KhrSwapchain? khrSwapChain;
     private SwapchainKHR swapChain;
-    private Image[] swapChainImages = new Image[0];
+    private Image[]? swapChainImages;
     private Format swapChainImageFormat;
     private Extent2D swapChainExtent;
-    private ImageView[] swapChainImageViews = new ImageView[0];
+    private ImageView[]? swapChainImageViews;
 
     public void Run()
     {
@@ -117,7 +117,7 @@ unsafe class HelloTriangleApplication
 
     private void CleanUp()
     {
-        foreach (var imageView in swapChainImageViews)
+        foreach (var imageView in swapChainImageViews!)
         {
             vk!.DestroyImageView(device, imageView, null);
         }
@@ -393,7 +393,7 @@ unsafe class HelloTriangleApplication
         }
 
         khrSwapChain.GetSwapchainImages(device, swapChain, ref imageCount, null);
-        Array.Resize(ref swapChainImages, (int)imageCount);
+        swapChainImages = new Image[imageCount];
         khrSwapChain.GetSwapchainImages(device, swapChain, ref imageCount, out swapChainImages[0]);
 
         swapChainImageFormat = surfaceFormat.Format;
@@ -402,7 +402,7 @@ unsafe class HelloTriangleApplication
 
     private void CreateImageViews()
     {
-        Array.Resize(ref swapChainImageViews, swapChainImages.Length);
+        swapChainImageViews = new ImageView[swapChainImages!.Length];
 
         for (int i = 0; i < swapChainImages.Length; i++)
         {

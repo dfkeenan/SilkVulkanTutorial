@@ -67,7 +67,7 @@ unsafe class HelloTriangleApplication
 
     private KhrSwapchain? khrSwapChain;
     private SwapchainKHR swapChain;
-    private Image[] swapChainImages = new Image[0];
+    private Image[]? swapChainImages;
     private Format swapChainImageFormat;
     private Extent2D swapChainExtent;
 
@@ -385,7 +385,7 @@ unsafe class HelloTriangleApplication
         }
 
         khrSwapChain.GetSwapchainImages(device, swapChain, ref imageCount, null);
-        Array.Resize(ref swapChainImages, (int)imageCount);
+        swapChainImages = new Image[imageCount];
         khrSwapChain.GetSwapchainImages(device, swapChain, ref imageCount, out swapChainImages[0]);
 
         swapChainImageFormat = surfaceFormat.Format;

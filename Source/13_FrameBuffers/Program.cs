@@ -67,11 +67,11 @@ unsafe class HelloTriangleApplication
 
     private KhrSwapchain? khrSwapChain;
     private SwapchainKHR swapChain;
-    private Image[] swapChainImages = new Image[0];
+    private Image[]? swapChainImages;
     private Format swapChainImageFormat;
     private Extent2D swapChainExtent;
-    private ImageView[] swapChainImageViews = new ImageView[0];
-    private Framebuffer[] swapChainFramebuffers = new Framebuffer[0];
+    private ImageView[]? swapChainImageViews;
+    private Framebuffer[]? swapChainFramebuffers;
 
     private RenderPass renderPass;
     private PipelineLayout pipelineLayout;
@@ -124,7 +124,7 @@ unsafe class HelloTriangleApplication
 
     private void CleanUp()
     {
-        foreach (var framebuffer in swapChainFramebuffers)
+        foreach (var framebuffer in swapChainFramebuffers!)
         {
             vk!.DestroyFramebuffer(device, framebuffer, null);
         }
@@ -133,7 +133,7 @@ unsafe class HelloTriangleApplication
         vk!.DestroyPipelineLayout(device, pipelineLayout, null);
         vk!.DestroyRenderPass(device, renderPass, null);
 
-        foreach (var imageView in swapChainImageViews)
+        foreach (var imageView in swapChainImageViews!)
         {
             vk!.DestroyImageView(device, imageView, null);
         }
@@ -409,7 +409,7 @@ unsafe class HelloTriangleApplication
         }
 
         khrSwapChain.GetSwapchainImages(device, swapChain, ref imageCount, null);
-        Array.Resize(ref swapChainImages, (int)imageCount);
+        swapChainImages = new Image[imageCount];
         khrSwapChain.GetSwapchainImages(device, swapChain, ref imageCount, out swapChainImages[0]);
 
         swapChainImageFormat = surfaceFormat.Format;
@@ -418,7 +418,7 @@ unsafe class HelloTriangleApplication
 
     private void CreateImageViews()
     {
-        Array.Resize(ref swapChainImageViews, swapChainImages.Length);
+        swapChainImageViews = new ImageView[swapChainImages!.Length];
 
         for (int i = 0; i < swapChainImages.Length; i++)
         {
@@ -646,7 +646,7 @@ unsafe class HelloTriangleApplication
 
     private void CreateFramebuffers()
     {
-        swapChainFramebuffers = new Framebuffer[swapChainImageViews.Length];
+        swapChainFramebuffers = new Framebuffer[swapChainImageViews!.Length];
 
         for(int i = 0; i < swapChainImageViews.Length; i++)
         {

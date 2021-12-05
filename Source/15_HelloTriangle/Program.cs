@@ -69,23 +69,23 @@ unsafe class HelloTriangleApplication
 
     private KhrSwapchain? khrSwapChain;
     private SwapchainKHR swapChain;
-    private Image[] swapChainImages = new Image[0];
+    private Image[]? swapChainImages;
     private Format swapChainImageFormat;
     private Extent2D swapChainExtent;
-    private ImageView[] swapChainImageViews = new ImageView[0];
-    private Framebuffer[] swapChainFramebuffers = new Framebuffer[0];
+    private ImageView[]? swapChainImageViews;
+    private Framebuffer[]? swapChainFramebuffers;
 
     private RenderPass renderPass;
     private PipelineLayout pipelineLayout;
     private Pipeline graphicsPipeline;
 
     private CommandPool commandPool;
-    private CommandBuffer[] commandBuffers = new CommandBuffer[0];
+    private CommandBuffer[]? commandBuffers;
 
-    Semaphore[] imageAvailableSemaphores = new Semaphore[0];
-    Semaphore[] renderFinishedSemaphores = new Semaphore[0];
-    Fence[] inFlightFences = new Fence[0];
-    Fence[] imagesInFlight = new Fence[0];
+    Semaphore[]? imageAvailableSemaphores;
+    Semaphore[]? renderFinishedSemaphores;
+    Fence[]? inFlightFences;
+    Fence[]? imagesInFlight;
     int currentFrame = 0;
 
     public void Run()
@@ -142,14 +142,14 @@ unsafe class HelloTriangleApplication
     {
         for (int i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
         {
-            vk!.DestroySemaphore(device, renderFinishedSemaphores[i], null);
-            vk!.DestroySemaphore(device, imageAvailableSemaphores[i], null);
-            vk!.DestroyFence(device, inFlightFences[i], null);
+            vk!.DestroySemaphore(device, renderFinishedSemaphores![i], null);
+            vk!.DestroySemaphore(device, imageAvailableSemaphores![i], null);
+            vk!.DestroyFence(device, inFlightFences![i], null);
         }
 
         vk!.DestroyCommandPool(device, commandPool, null);
 
-        foreach (var framebuffer in swapChainFramebuffers)
+        foreach (var framebuffer in swapChainFramebuffers!)
         {
             vk!.DestroyFramebuffer(device, framebuffer, null);
         }
@@ -158,7 +158,7 @@ unsafe class HelloTriangleApplication
         vk!.DestroyPipelineLayout(device, pipelineLayout, null);
         vk!.DestroyRenderPass(device, renderPass, null);
 
-        foreach (var imageView in swapChainImageViews)
+        foreach (var imageView in swapChainImageViews!)
         {
             vk!.DestroyImageView(device, imageView, null);
         }
@@ -434,7 +434,7 @@ unsafe class HelloTriangleApplication
         }
 
         khrSwapChain.GetSwapchainImages(device, swapChain, ref imageCount, null);
-        Array.Resize(ref swapChainImages, (int)imageCount);
+        swapChainImages = new Image[imageCount];
         khrSwapChain.GetSwapchainImages(device, swapChain, ref imageCount, out swapChainImages[0]);
 
         swapChainImageFormat = surfaceFormat.Format;
@@ -443,7 +443,7 @@ unsafe class HelloTriangleApplication
 
     private void CreateImageViews()
     {
-        Array.Resize(ref swapChainImageViews, swapChainImages.Length);
+        swapChainImageViews = new ImageView[swapChainImages!.Length];
 
         for (int i = 0; i < swapChainImages.Length; i++)
         {
@@ -683,7 +683,7 @@ unsafe class HelloTriangleApplication
 
     private void CreateFramebuffers()
     {
-        swapChainFramebuffers = new Framebuffer[swapChainImageViews.Length];
+        swapChainFramebuffers = new Framebuffer[swapChainImageViews!.Length];
 
         for(int i = 0; i < swapChainImageViews.Length; i++)
         {
@@ -725,7 +725,7 @@ unsafe class HelloTriangleApplication
 
     private void CreateCommandBuffers()
     {
-        commandBuffers = new CommandBuffer[swapChainFramebuffers.Length];
+        commandBuffers = new CommandBuffer[swapChainFramebuffers!.Length];
 
         CommandBufferAllocateInfo allocInfo = new()
         {
@@ -793,7 +793,7 @@ unsafe class HelloTriangleApplication
         imageAvailableSemaphores = new Semaphore[MAX_FRAMES_IN_FLIGHT];
         renderFinishedSemaphores = new Semaphore[MAX_FRAMES_IN_FLIGHT];
         inFlightFences = new Fence[MAX_FRAMES_IN_FLIGHT];
-        imagesInFlight = new Fence[swapChainImages.Length];
+        imagesInFlight = new Fence[swapChainImages!.Length];
 
         SemaphoreCreateInfo semaphoreInfo = new()
         {
@@ -819,12 +819,12 @@ unsafe class HelloTriangleApplication
 
     private void DrawFrame(double delta)
     {
-        vk!.WaitForFences(device, 1, inFlightFences[currentFrame], true, ulong.MaxValue);
+        vk!.WaitForFences(device, 1, inFlightFences![currentFrame], true, ulong.MaxValue);
 
         uint imageIndex = 0;
-        khrSwapChain!.AcquireNextImage(device, swapChain, ulong.MaxValue, imageAvailableSemaphores[currentFrame], default, ref imageIndex);
+        khrSwapChain!.AcquireNextImage(device, swapChain, ulong.MaxValue, imageAvailableSemaphores![currentFrame], default, ref imageIndex);
 
-        if(imagesInFlight[imageIndex].Handle != default)
+        if(imagesInFlight![imageIndex].Handle != default)
         {
             vk!.WaitForFences(device, 1, imagesInFlight[imageIndex], true, ulong.MaxValue);
         }
@@ -838,7 +838,7 @@ unsafe class HelloTriangleApplication
         var waitSemaphores = stackalloc [] {imageAvailableSemaphores[currentFrame]};
         var waitStages = stackalloc [] { PipelineStageFlags.PipelineStageColorAttachmentOutputBit };
 
-        var buffer = commandBuffers[imageIndex];
+        var buffer = commandBuffers![imageIndex];
 
         submitInfo = submitInfo with 
         { 
@@ -850,7 +850,7 @@ unsafe class HelloTriangleApplication
             PCommandBuffers = &buffer
         };
 
-        var signalSemaphores = stackalloc[] { renderFinishedSemaphores[currentFrame] };
+        var signalSemaphores = stackalloc[] { renderFinishedSemaphores![currentFrame] };
         submitInfo = submitInfo with
         {
             SignalSemaphoreCount = 1,
