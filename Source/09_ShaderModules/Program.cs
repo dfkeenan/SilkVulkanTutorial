@@ -481,15 +481,17 @@ unsafe class HelloTriangleApplication
             SType = StructureType.ShaderModuleCreateInfo,
             CodeSize = (nuint)code.Length,
         };
+
+        ShaderModule shaderModule;
+
         fixed (byte* codePtr = code)
         {
             createInfo.PCode = (uint*)codePtr;
-        }
 
-        ShaderModule shaderModule;
-        if (vk!.CreateShaderModule(device, createInfo, null, out shaderModule) != Result.Success)
-        {
-            throw new Exception();
+            if (vk!.CreateShaderModule(device, createInfo, null, out shaderModule) != Result.Success)
+            {
+                throw new Exception();
+            }
         }
 
         return shaderModule;
