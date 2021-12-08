@@ -199,7 +199,10 @@ unsafe class HelloTriangleApplication
         }
 
         var devices = new PhysicalDevice[devicedCount];
-        vk!.EnumeratePhysicalDevices(instance, ref devicedCount, ref devices[0]);
+        fixed (PhysicalDevice* devicesPtr = devices)
+        {
+            vk!.EnumeratePhysicalDevices(instance, ref devicedCount, devicesPtr);
+        }
 
         foreach (var device in devices)
         {
@@ -281,9 +284,12 @@ unsafe class HelloTriangleApplication
         vk!.GetPhysicalDeviceQueueFamilyProperties(device, ref queueFamilityCount, null);
 
         var queueFamilies = new QueueFamilyProperties[queueFamilityCount];
-        vk!.GetPhysicalDeviceQueueFamilyProperties(device, ref queueFamilityCount, out queueFamilies[0]);
-        
-        
+        fixed (QueueFamilyProperties* queueFamiliesPtr = queueFamilies)
+        {
+            vk!.GetPhysicalDeviceQueueFamilyProperties(device, ref queueFamilityCount, queueFamiliesPtr);
+        }
+
+
         uint i = 0;
         foreach (var queueFamily in queueFamilies)
         {
@@ -321,7 +327,10 @@ unsafe class HelloTriangleApplication
         uint layerCount = 0;
         vk!.EnumerateInstanceLayerProperties(ref layerCount, null);
         var availableLayers = new LayerProperties[layerCount];
-        vk!.EnumerateInstanceLayerProperties(ref layerCount, ref availableLayers[0]);
+        fixed (LayerProperties* availableLayersPtr = availableLayers)
+        {
+            vk!.EnumerateInstanceLayerProperties(ref layerCount, availableLayersPtr);
+        }
 
         var availableLayerNames = availableLayers.Select(layer => Marshal.PtrToStringAnsi((IntPtr)layer.LayerName)).ToHashSet();
 

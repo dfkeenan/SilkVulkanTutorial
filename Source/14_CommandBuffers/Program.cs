@@ -270,7 +270,10 @@ unsafe class HelloTriangleApplication
         }
 
         var devices = new PhysicalDevice[devicedCount];
-        vk!.EnumeratePhysicalDevices(instance, ref devicedCount, ref devices[0]);
+        fixed (PhysicalDevice* devicesPtr = devices)
+        {
+            vk!.EnumeratePhysicalDevices(instance, ref devicedCount, devicesPtr);
+        }
 
         foreach (var device in devices)
         {
@@ -379,7 +382,7 @@ unsafe class HelloTriangleApplication
         };
 
         var indicies = FindQueueFamilies(physicalDevice);
-        var queueFamilyIndices = new[] { indicies.GraphicsFamily!.Value, indicies.PresentFamily!.Value };
+        var queueFamilyIndices = stackalloc[] { indicies.GraphicsFamily!.Value, indicies.PresentFamily!.Value };
 
         if (indicies.GraphicsFamily != indicies.PresentFamily)
         {
@@ -387,7 +390,7 @@ unsafe class HelloTriangleApplication
             {
                 ImageSharingMode = SharingMode.Concurrent,
                 QueueFamilyIndexCount = 2,
-                PQueueFamilyIndices = (uint*)queueFamilyIndices[0],
+                PQueueFamilyIndices = queueFamilyIndices,
             };
         }
         else
@@ -417,7 +420,10 @@ unsafe class HelloTriangleApplication
 
         khrSwapChain.GetSwapchainImages(device, swapChain, ref imageCount, null);
         swapChainImages = new Image[imageCount];
-        khrSwapChain.GetSwapchainImages(device, swapChain, ref imageCount, out swapChainImages[0]);
+        fixed (Image* swapChainImagesPtr = swapChainImages)
+        {
+            khrSwapChain.GetSwapchainImages(device, swapChain, ref imageCount, swapChainImagesPtr);
+        }
 
         swapChainImageFormat = surfaceFormat.Format;
         swapChainExtent = extent;
@@ -705,9 +711,12 @@ unsafe class HelloTriangleApplication
             CommandBufferCount = (uint)commandBuffers.Length,
         };
 
-        if(vk!.AllocateCommandBuffers(device, allocInfo, out commandBuffers[0]) != Result.Success)
+        fixed (CommandBuffer* commandBuffersPtr = commandBuffers)
         {
-            throw new Exception("failed to allocate command buffers!");
+            if (vk!.AllocateCommandBuffers(device, allocInfo, commandBuffersPtr) != Result.Success)
+            {
+                throw new Exception("failed to allocate command buffers!");
+            }
         }
 
         for (int i = 0; i < commandBuffers.Length; i++)
@@ -839,10 +848,13 @@ unsafe class HelloTriangleApplication
         uint formatCount = 0;
         khrSurface.GetPhysicalDeviceSurfaceFormats(physicalDevice, surface, ref formatCount, null);
 
-        if(formatCount != 0)
+        if (formatCount != 0)
         {
             details.Formats = new SurfaceFormatKHR[formatCount];
-            khrSurface.GetPhysicalDeviceSurfaceFormats(physicalDevice, surface, ref formatCount, out details.Formats[0]);
+            fixed (SurfaceFormatKHR* formatsPtr = details.Formats)
+            {
+                khrSurface.GetPhysicalDeviceSurfaceFormats(physicalDevice, surface, ref formatCount, formatsPtr);
+            }
         }
         else
         {
@@ -855,7 +867,11 @@ unsafe class HelloTriangleApplication
         if (presentModeCount != 0)
         {
             details.PresentModes = new PresentModeKHR[presentModeCount];
-            khrSurface.GetPhysicalDeviceSurfacePresentModes(physicalDevice, surface, ref presentModeCount, out details.PresentModes[0]);
+            fixed (PresentModeKHR* formatsPtr = details.PresentModes)
+            {
+                khrSurface.GetPhysicalDeviceSurfacePresentModes(physicalDevice, surface, ref presentModeCount, formatsPtr);
+            }
+
         }
         else
         {
@@ -887,7 +903,10 @@ unsafe class HelloTriangleApplication
         vk!.EnumerateDeviceExtensionProperties(device, (byte*)null, ref extentionsCount, null);
 
         var availableExtensions = new ExtensionProperties[extentionsCount];
-        vk!.EnumerateDeviceExtensionProperties(device, (byte*)null, ref extentionsCount, ref availableExtensions[0]);
+        fixed (ExtensionProperties* availableExtensionsPtr = availableExtensions)
+        {
+            vk!.EnumerateDeviceExtensionProperties(device, (byte*)null, ref extentionsCount, availableExtensionsPtr);
+        }
 
         var availableExtensionNames = availableExtensions.Select(extension => Marshal.PtrToStringAnsi((IntPtr)extension.ExtensionName)).ToHashSet();
 
@@ -903,9 +922,12 @@ unsafe class HelloTriangleApplication
         vk!.GetPhysicalDeviceQueueFamilyProperties(device, ref queueFamilityCount, null);
 
         var queueFamilies = new QueueFamilyProperties[queueFamilityCount];
-        vk!.GetPhysicalDeviceQueueFamilyProperties(device, ref queueFamilityCount, out queueFamilies[0]);
-        
-        
+        fixed (QueueFamilyProperties* queueFamiliesPtr = queueFamilies)
+        {
+            vk!.GetPhysicalDeviceQueueFamilyProperties(device, ref queueFamilityCount, queueFamiliesPtr);
+        }
+
+
         uint i = 0;
         foreach (var queueFamily in queueFamilies)
         {
@@ -950,7 +972,10 @@ unsafe class HelloTriangleApplication
         uint layerCount = 0;
         vk!.EnumerateInstanceLayerProperties(ref layerCount, null);
         var availableLayers = new LayerProperties[layerCount];
-        vk!.EnumerateInstanceLayerProperties(ref layerCount, ref availableLayers[0]);
+        fixed (LayerProperties* availableLayersPtr = availableLayers)
+        {
+            vk!.EnumerateInstanceLayerProperties(ref layerCount, availableLayersPtr);
+        }
 
         var availableLayerNames = availableLayers.Select(layer => Marshal.PtrToStringAnsi((IntPtr)layer.LayerName)).ToHashSet();
 

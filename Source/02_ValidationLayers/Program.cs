@@ -188,7 +188,10 @@ unsafe class HelloTriangleApplication
         uint layerCount = 0;
         vk!.EnumerateInstanceLayerProperties(ref layerCount, null);
         var availableLayers = new LayerProperties[layerCount];
-        vk!.EnumerateInstanceLayerProperties(ref layerCount, ref availableLayers[0]);
+        fixed (LayerProperties* availableLayersPtr = availableLayers)
+        {
+            vk!.EnumerateInstanceLayerProperties(ref layerCount, availableLayersPtr);
+        }
 
         var availableLayerNames = availableLayers.Select(layer => Marshal.PtrToStringAnsi((IntPtr)layer.LayerName)).ToHashSet();
 
