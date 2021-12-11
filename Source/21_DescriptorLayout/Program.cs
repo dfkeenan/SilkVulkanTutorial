@@ -74,6 +74,13 @@ struct Vertex
     }
 }
 
+struct UniformBufferObject
+{
+    public Matrix4X4<float> model;
+    public Matrix4X4<float> view;
+    public Matrix4X4<float> proj;
+}
+
 unsafe class HelloTriangleApplication
 {
     const int WIDTH = 800;
@@ -118,6 +125,7 @@ unsafe class HelloTriangleApplication
     private Framebuffer[]? swapChainFramebuffers;
 
     private RenderPass renderPass;
+    private DescriptorSetLayout descriptorSetLayout;
     private PipelineLayout pipelineLayout;
     private Pipeline graphicsPipeline;
 
@@ -127,6 +135,9 @@ unsafe class HelloTriangleApplication
     private DeviceMemory vertexBufferMemory;
     private Buffer indexBuffer;
     private DeviceMemory indexBufferMemory;
+
+    private Buffer[]? uniformBuffers;
+    private DeviceMemory[]? uniformBuffersMemory;
 
     private CommandBuffer[]? commandBuffers;
 
@@ -194,11 +205,13 @@ unsafe class HelloTriangleApplication
         CreateSwapChain();
         CreateImageViews();
         CreateRenderPass();
+        CreateDescriptorSetLayout();
         CreateGraphicsPipeline();
         CreateFramebuffers();
         CreateCommandPool();
         CreateVertexBuffer();
         CreateIndexBuffer();
+        CreateUniformBuffers();
         CreateCommandBuffers();
         CreateSyncObjects();
     }
@@ -232,11 +245,19 @@ unsafe class HelloTriangleApplication
         }
 
         khrSwapChain!.DestroySwapchain(device, swapChain, null);
+
+        for (int i = 0; i < swapChainImages!.Length; i++)
+        {
+            vk!.DestroyBuffer(device, uniformBuffers![i], null);
+            vk!.FreeMemory(device, uniformBuffersMemory![i], null);
+        }
     }
 
     private void CleanUp()
     {
         CleanUpSwapChain();
+
+        vk!.DestroyDescriptorSetLayout(device, descriptorSetLayout, null);
 
         vk!.DestroyBuffer(device, indexBuffer, null);
         vk!.FreeMemory(device, indexBufferMemory, null);
@@ -287,6 +308,7 @@ unsafe class HelloTriangleApplication
         CreateRenderPass();
         CreateGraphicsPipeline();
         CreateFramebuffers();
+        CreateUniformBuffers();
         CreateCommandBuffers();
 
         imagesInFlight = new Fence[swapChainImages!.Length];
@@ -647,6 +669,33 @@ unsafe class HelloTriangleApplication
         }
     }
 
+    private void CreateDescriptorSetLayout()
+    {
+        DescriptorSetLayoutBinding uboLayoutBinding = new()
+        {
+            Binding = 0,
+            DescriptorCount = 1,
+            DescriptorType = DescriptorType.UniformBuffer,
+            PImmutableSamplers = null,
+            StageFlags = ShaderStageFlags.ShaderStageVertexBit,
+        };
+
+        DescriptorSetLayoutCreateInfo layoutInfo = new()
+        {
+            SType = StructureType.DescriptorSetLayoutCreateInfo,
+            BindingCount = 1,
+            PBindings = &uboLayoutBinding,
+        };
+
+        fixed(DescriptorSetLayout* descriptorSetLayoutPtr = &descriptorSetLayout)
+        {
+            if(vk!.CreateDescriptorSetLayout(device, layoutInfo, null, descriptorSetLayoutPtr) != Result.Success)
+            {
+                throw new Exception("failed to create descriptor set layout!");
+            }
+        }
+    }
+
     private void CreateGraphicsPipeline()
     {
         var vertShaderCode = File.ReadAllBytes("shaders/vert.spv");
@@ -681,6 +730,7 @@ unsafe class HelloTriangleApplication
         var attributeDescriptions = Vertex.GetAttributeDescriptions();
 
         fixed (VertexInputAttributeDescription* attributeDescriptionsPtr = attributeDescriptions)
+        fixed (DescriptorSetLayout* descriptorSetLayoutPtr = &descriptorSetLayout)
         {
 
             PipelineVertexInputStateCreateInfo vertexInputInfo = new()
@@ -766,8 +816,9 @@ unsafe class HelloTriangleApplication
             PipelineLayoutCreateInfo pipelineLayoutInfo = new()
             {
                 SType = StructureType.PipelineLayoutCreateInfo,
-                SetLayoutCount = 0,
-                PushConstantRangeCount = 0,
+                PushConstantRangeCount = 0,                
+                SetLayoutCount = 1,
+                PSetLayouts = descriptorSetLayoutPtr
             };
 
             if (vk!.CreatePipelineLayout(device, pipelineLayoutInfo, null, out pipelineLayout) != Result.Success)
@@ -887,6 +938,20 @@ unsafe class HelloTriangleApplication
 
         vk!.DestroyBuffer(device, stagingBuffer, null);
         vk!.FreeMemory(device, stagingBufferMemory, null);
+    }
+
+    private void CreateUniformBuffers()
+    {
+        ulong bufferSize = (ulong)Unsafe.SizeOf<UniformBufferObject>();
+
+        uniformBuffers = new Buffer[swapChainImages!.Length];
+        uniformBuffersMemory = new DeviceMemory[swapChainImages!.Length];
+
+        for (int i = 0; i < swapChainImages.Length; i++)
+        {
+            CreateBuffer(bufferSize, BufferUsageFlags.BufferUsageUniformBufferBit, MemoryPropertyFlags.MemoryPropertyHostVisibleBit | MemoryPropertyFlags.MemoryPropertyHostCoherentBit, ref uniformBuffers[i], ref uniformBuffersMemory[i]);   
+        }
+
     }
 
     private void CreateBuffer(ulong size, BufferUsageFlags usage, MemoryPropertyFlags properties, ref Buffer buffer, ref DeviceMemory bufferMemory)
@@ -1096,6 +1161,28 @@ unsafe class HelloTriangleApplication
         }
     }
 
+    private void UpdateUniformBuffer(uint currentImage)
+    {
+        //Silk Window has timing information so we are skipping the time code.
+        var time = (float)window!.Time;
+
+        UniformBufferObject ubo = new()
+        {
+            model = Matrix4X4<float>.Identity * Matrix4X4.CreateFromAxisAngle<float>(new Vector3D<float>(0,0,1), time * Radians(90.0f)),
+            view = Matrix4X4.CreateLookAt(new Vector3D<float>(2, 2, 2), new Vector3D<float>(0, 0, 0), new Vector3D<float>(0, 0, 1)),
+            proj = Matrix4X4.CreatePerspectiveFieldOfView(Radians(45.0f), swapChainExtent.Width / swapChainExtent.Height, 0.1f, 10.0f),
+        };
+
+
+        void* data;
+        vk!.MapMemory(device, uniformBuffersMemory![currentImage], 0, (ulong)Unsafe.SizeOf<UniformBufferObject>(), 0, &data);
+            new Span<UniformBufferObject>(data, 1)[0] = ubo;
+        vk!.UnmapMemory(device, uniformBuffersMemory![currentImage]);
+
+
+        static float Radians(float angle) => angle * MathF.PI / 180f;
+    }
+
     private void DrawFrame(double delta)
     {
         vk!.WaitForFences(device, 1, inFlightFences![currentFrame], true, ulong.MaxValue);
@@ -1112,6 +1199,8 @@ unsafe class HelloTriangleApplication
         {
             throw new Exception("failed to acquire swap chain image!");
         }
+
+        UpdateUniformBuffer(imageIndex);
 
         if(imagesInFlight![imageIndex].Handle != default)
         {
