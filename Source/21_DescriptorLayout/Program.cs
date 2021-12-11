@@ -558,12 +558,15 @@ unsafe class HelloTriangleApplication
             Clipped = true,
         };
 
-        if (!vk!.TryGetDeviceExtension(instance, device, out khrSwapChain))
+        if (khrSwapChain is null)
         {
-            throw new NotSupportedException("VK_KHR_swapchain extension not found.");
+            if (!vk!.TryGetDeviceExtension(instance, device, out khrSwapChain))
+            {
+                throw new NotSupportedException("VK_KHR_swapchain extension not found.");
+            }
         }
 
-        if(khrSwapChain!.CreateSwapchain(device, creatInfo, null, out swapChain) != Result.Success)
+        if (khrSwapChain!.CreateSwapchain(device, creatInfo, null, out swapChain) != Result.Success)
         {
             throw new Exception("failed to create swap chain!");
         }
@@ -1172,6 +1175,7 @@ unsafe class HelloTriangleApplication
             view = Matrix4X4.CreateLookAt(new Vector3D<float>(2, 2, 2), new Vector3D<float>(0, 0, 0), new Vector3D<float>(0, 0, 1)),
             proj = Matrix4X4.CreatePerspectiveFieldOfView(Radians(45.0f), swapChainExtent.Width / swapChainExtent.Height, 0.1f, 10.0f),
         };
+        ubo.proj.M22 *= -1;
 
 
         void* data;
