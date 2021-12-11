@@ -139,6 +139,9 @@ unsafe class HelloTriangleApplication
     private Buffer[]? uniformBuffers;
     private DeviceMemory[]? uniformBuffersMemory;
 
+    private DescriptorPool descriptorPool;
+    private DescriptorSet[]? descriptorSets;
+
     private CommandBuffer[]? commandBuffers;
 
     Semaphore[]? imageAvailableSemaphores;
@@ -212,6 +215,8 @@ unsafe class HelloTriangleApplication
         CreateVertexBuffer();
         CreateIndexBuffer();
         CreateUniformBuffers();
+        CreateDescriptorPool();
+        CreateDescriptorSets();
         CreateCommandBuffers();
         CreateSyncObjects();
     }
@@ -251,6 +256,8 @@ unsafe class HelloTriangleApplication
             vk!.DestroyBuffer(device, uniformBuffers![i], null);
             vk!.FreeMemory(device, uniformBuffersMemory![i], null);
         }
+
+        vk!.DestroyDescriptorPool(device, descriptorPool, null);
     }
 
     private void CleanUp()
@@ -309,6 +316,8 @@ unsafe class HelloTriangleApplication
         CreateGraphicsPipeline();
         CreateFramebuffers();
         CreateUniformBuffers();
+        CreateDescriptorPool();
+        CreateDescriptorSets();
         CreateCommandBuffers();
 
         imagesInFlight = new Fence[swapChainImages!.Length];
@@ -558,12 +567,15 @@ unsafe class HelloTriangleApplication
             Clipped = true,
         };
 
-        if (!vk!.TryGetDeviceExtension(instance, device, out khrSwapChain))
+        if (khrSwapChain is null)
         {
-            throw new NotSupportedException("VK_KHR_swapchain extension not found.");
+            if (!vk!.TryGetDeviceExtension(instance, device, out khrSwapChain))
+            {
+                throw new NotSupportedException("VK_KHR_swapchain extension not found.");
+            }
         }
 
-        if(khrSwapChain!.CreateSwapchain(device, creatInfo, null, out swapChain) != Result.Success)
+        if (khrSwapChain!.CreateSwapchain(device, creatInfo, null, out swapChain) != Result.Success)
         {
             throw new Exception("failed to create swap chain!");
         }
@@ -782,7 +794,7 @@ unsafe class HelloTriangleApplication
                 PolygonMode = PolygonMode.Fill,
                 LineWidth = 1,
                 CullMode = CullModeFlags.CullModeBackBit,
-                FrontFace = FrontFace.Clockwise,
+                FrontFace = FrontFace.CounterClockwise,
                 DepthBiasEnable = false,
             };
 
@@ -954,6 +966,85 @@ unsafe class HelloTriangleApplication
 
     }
 
+    private void CreateDescriptorPool()
+    {
+        DescriptorPoolSize poolSize = new()
+        {
+            Type = DescriptorType.UniformBuffer,
+            DescriptorCount = (uint)swapChainImages!.Length,
+        };
+
+
+        DescriptorPoolCreateInfo poolInfo = new()
+        {
+            SType = StructureType.DescriptorPoolCreateInfo,
+            PoolSizeCount = 1,
+            PPoolSizes = &poolSize,
+            MaxSets = (uint)swapChainImages!.Length,
+        };
+
+        fixed (DescriptorPool* descriptorPoolPtr = &descriptorPool)
+        {
+            if(vk!.CreateDescriptorPool(device, poolInfo, null, descriptorPoolPtr) != Result.Success)
+            {
+                throw new Exception("failed to create descriptor pool!");
+            }
+
+        }
+    }
+
+    private void CreateDescriptorSets()
+    {
+        var layouts = new DescriptorSetLayout[swapChainImages!.Length];
+        Array.Fill(layouts, descriptorSetLayout); 
+
+        fixed (DescriptorSetLayout* layoutsPtr = layouts)
+        {
+            DescriptorSetAllocateInfo allocateInfo = new()
+            {
+                SType = StructureType.DescriptorSetAllocateInfo,
+                DescriptorPool = descriptorPool,
+                DescriptorSetCount = (uint)swapChainImages!.Length,
+                PSetLayouts = layoutsPtr,
+            };
+
+            descriptorSets = new DescriptorSet[swapChainImages.Length];
+            fixed (DescriptorSet* descriptorSetsPtr = descriptorSets)
+            {
+                if (vk!.AllocateDescriptorSets(device, allocateInfo, descriptorSetsPtr) != Result.Success)
+                {
+                    throw new Exception("failed to allocate descriptor sets!");
+                }
+            }
+        }
+        
+
+        for (int i = 0; i < swapChainImages.Length; i++)
+        {
+            DescriptorBufferInfo bufferInfo = new()
+            {
+                Buffer = uniformBuffers![i],
+                Offset = 0,
+                Range = (ulong)Unsafe.SizeOf<UniformBufferObject>(),
+
+            };
+
+            WriteDescriptorSet descriptorWrite = new()
+            {
+                SType = StructureType.WriteDescriptorSet,
+                DstSet = descriptorSets[i],
+                DstBinding = 0,
+                DstArrayElement = 0,
+                DescriptorType = DescriptorType.UniformBuffer,
+                DescriptorCount = 1,
+                PBufferInfo = &bufferInfo,
+            };
+
+            vk!.UpdateDescriptorSets(device, 1, descriptorWrite, 0, null);
+        }
+
+    }
+
     private void CreateBuffer(ulong size, BufferUsageFlags usage, MemoryPropertyFlags properties, ref Buffer buffer, ref DeviceMemory bufferMemory)
     {
         BufferCreateInfo bufferInfo = new()
@@ -1120,6 +1211,8 @@ unsafe class HelloTriangleApplication
 
                 vk!.CmdBindIndexBuffer(commandBuffers[i], indexBuffer, 0, IndexType.Uint16);
 
+                vk!.CmdBindDescriptorSets(commandBuffers[i], PipelineBindPoint.Graphics, pipelineLayout, 0, 1, descriptorSets![i], 0, null);
+
                 vk!.CmdDrawIndexed(commandBuffers[i], (uint)indicies.Length, 1, 0, 0, 0);
 
             vk!.CmdEndRenderPass(commandBuffers[i]);
@@ -1168,10 +1261,11 @@ unsafe class HelloTriangleApplication
 
         UniformBufferObject ubo = new()
         {
-            model = Matrix4X4<float>.Identity * Matrix4X4.CreateFromAxisAngle<float>(new Vector3D<float>(0,0,1), time * Radians(90.0f)),
+            model = Matrix4X4<float>.Identity * Matrix4X4.CreateFromAxisAngle<float>(new Vector3D<float>(0,0,1), time * Scalar.DegreesToRadians(90.0f)),
             view = Matrix4X4.CreateLookAt(new Vector3D<float>(2, 2, 2), new Vector3D<float>(0, 0, 0), new Vector3D<float>(0, 0, 1)),
-            proj = Matrix4X4.CreatePerspectiveFieldOfView(Radians(45.0f), swapChainExtent.Width / swapChainExtent.Height, 0.1f, 10.0f),
+            proj = Matrix4X4.CreatePerspectiveFieldOfView(Scalar.DegreesToRadians(45.0f), swapChainExtent.Width / swapChainExtent.Height, 0.1f, 10.0f),
         };
+        ubo.proj.M22 *= -1;
 
 
         void* data;
@@ -1179,8 +1273,6 @@ unsafe class HelloTriangleApplication
             new Span<UniformBufferObject>(data, 1)[0] = ubo;
         vk!.UnmapMemory(device, uniformBuffersMemory![currentImage]);
 
-
-        static float Radians(float angle) => angle * MathF.PI / 180f;
     }
 
     private void DrawFrame(double delta)
