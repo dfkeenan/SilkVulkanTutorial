@@ -125,6 +125,8 @@ unsafe class HelloTriangleApplication
 
     private Buffer vertexBuffer;
     private DeviceMemory vertexBufferMemory;
+    private Buffer indexBuffer;
+    private DeviceMemory indexBufferMemory;
 
     private CommandBuffer[]? commandBuffers;
 
@@ -138,9 +140,15 @@ unsafe class HelloTriangleApplication
 
     private Vertex[] verticies = new Vertex[]
     {
-        new Vertex { pos = new Vector2D<float>(0.0f,-0.5f), color = new Vector3D<float>(1.0f, 0.0f, 0.0f) },
-        new Vertex { pos = new Vector2D<float>(0.5f,0.5f), color = new Vector3D<float>(0.0f, 1.0f, 0.0f) },
-        new Vertex { pos = new Vector2D<float>(-0.5f,0.5f), color = new Vector3D<float>(0.0f, 0.0f, 1.0f) },
+        new Vertex { pos = new Vector2D<float>(-0.5f,-0.5f), color = new Vector3D<float>(1.0f, 0.0f, 0.0f) },
+        new Vertex { pos = new Vector2D<float>(0.5f,-0.5f), color = new Vector3D<float>(0.0f, 1.0f, 0.0f) },
+        new Vertex { pos = new Vector2D<float>(0.5f,0.5f), color = new Vector3D<float>(0.0f, 0.0f, 1.0f) },
+        new Vertex { pos = new Vector2D<float>(-0.5f,0.5f), color = new Vector3D<float>(1.0f, 1.0f, 1.0f) },
+    };
+
+    private ushort[] indicies = new ushort[]
+    {
+        0, 1, 2, 2, 3, 0
     };
 
     public void Run()
@@ -190,6 +198,7 @@ unsafe class HelloTriangleApplication
         CreateFramebuffers();
         CreateCommandPool();
         CreateVertexBuffer();
+        CreateIndexBuffer();
         CreateCommandBuffers();
         CreateSyncObjects();
     }
@@ -228,6 +237,9 @@ unsafe class HelloTriangleApplication
     private void CleanUp()
     {
         CleanUpSwapChain();
+
+        vk!.DestroyBuffer(device, indexBuffer, null);
+        vk!.FreeMemory(device, indexBufferMemory, null);
 
         vk!.DestroyBuffer(device, vertexBuffer, null);
         vk!.FreeMemory(device,vertexBufferMemory, null);
@@ -856,6 +868,27 @@ unsafe class HelloTriangleApplication
         vk!.FreeMemory(device, stagingBufferMemory, null);
     }
 
+    private void CreateIndexBuffer()
+    {
+        ulong bufferSize = (ulong)(Unsafe.SizeOf<ushort>() * indicies.Length);
+
+        Buffer stagingBuffer = default;
+        DeviceMemory stagingBufferMemory = default;
+        CreateBuffer(bufferSize, BufferUsageFlags.BufferUsageTransferSrcBit, MemoryPropertyFlags.MemoryPropertyHostVisibleBit | MemoryPropertyFlags.MemoryPropertyHostCoherentBit, ref stagingBuffer, ref stagingBufferMemory);
+
+        void* data;
+        vk!.MapMemory(device, stagingBufferMemory, 0, bufferSize, 0, &data);
+            indicies.AsSpan().CopyTo(new Span<ushort>(data, indicies.Length));
+        vk!.UnmapMemory(device, stagingBufferMemory);
+
+        CreateBuffer(bufferSize, BufferUsageFlags.BufferUsageTransferDstBit | BufferUsageFlags.BufferUsageIndexBufferBit, MemoryPropertyFlags.MemoryPropertyDeviceLocalBit, ref indexBuffer, ref indexBufferMemory);
+
+        CopyBuffer(stagingBuffer, indexBuffer, bufferSize);
+
+        vk!.DestroyBuffer(device, stagingBuffer, null);
+        vk!.FreeMemory(device, stagingBufferMemory, null);
+    }
+
     private void CreateBuffer(ulong size, BufferUsageFlags usage, MemoryPropertyFlags properties, ref Buffer buffer, ref DeviceMemory bufferMemory)
     {
         BufferCreateInfo bufferInfo = new()
@@ -1020,7 +1053,9 @@ unsafe class HelloTriangleApplication
                     vk!.CmdBindVertexBuffers(commandBuffers[i], 0, 1, vertexBuffersPtr, offsetsPtr);
                 }
 
-                vk!.CmdDraw(commandBuffers[i], (uint)verticies.Length, 1, 0, 0);
+                vk!.CmdBindIndexBuffer(commandBuffers[i], indexBuffer, 0, IndexType.Uint16);
+
+                vk!.CmdDrawIndexed(commandBuffers[i], (uint)indicies.Length, 1, 0, 0, 0);
 
             vk!.CmdEndRenderPass(commandBuffers[i]);
 
