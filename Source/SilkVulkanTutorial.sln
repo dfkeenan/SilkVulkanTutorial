@@ -51,6 +51,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "19_StagingBuffer", "19_Stag
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "20_IndexBuffer", "20_IndexBuffer\20_IndexBuffer.csproj", "{2C43C00B-8797-4768-A329-91853343065D}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "21_DescriptorLayout", "21_DescriptorLayout\21_DescriptorLayout.csproj", "{673C0201-12D8-4FB9-8968-0DA76B6C1304}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -141,6 +143,10 @@ Global
 		{2C43C00B-8797-4768-A329-91853343065D}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{2C43C00B-8797-4768-A329-91853343065D}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{2C43C00B-8797-4768-A329-91853343065D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{673C0201-12D8-4FB9-8968-0DA76B6C1304}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{673C0201-12D8-4FB9-8968-0DA76B6C1304}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{673C0201-12D8-4FB9-8968-0DA76B6C1304}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{673C0201-12D8-4FB9-8968-0DA76B6C1304}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
