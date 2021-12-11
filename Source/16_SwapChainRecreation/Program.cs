@@ -88,6 +88,8 @@ unsafe class HelloTriangleApplication
     Fence[]? imagesInFlight;
     int currentFrame = 0;
 
+    private bool frameBufferResized = false;
+
     public void Run()
     {
         InitWindow();
@@ -112,6 +114,13 @@ unsafe class HelloTriangleApplication
         {
             throw new Exception("Windowing platform doesn't support Vulkan.");
         }
+
+        window.Resize += FramebufferResizeCallback;
+    }
+
+    private void FramebufferResizeCallback(Vector2D<int> obj)
+    {
+        frameBufferResized = true;
     }
 
     private void InitVulkan()
@@ -138,20 +147,16 @@ unsafe class HelloTriangleApplication
         vk!.DeviceWaitIdle(device);
     }
 
-    private void CleanUp()
+    private void CleanUpSwapChain()
     {
-        for (int i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
-        {
-            vk!.DestroySemaphore(device, renderFinishedSemaphores![i], null);
-            vk!.DestroySemaphore(device, imageAvailableSemaphores![i], null);
-            vk!.DestroyFence(device, inFlightFences![i], null);
-        }
-
-        vk!.DestroyCommandPool(device, commandPool, null);
-
         foreach (var framebuffer in swapChainFramebuffers!)
         {
             vk!.DestroyFramebuffer(device, framebuffer, null);
+        }
+
+        fixed (CommandBuffer* commandBuffersPtr = commandBuffers)
+        {
+            vk!.FreeCommandBuffers(device, commandPool, (uint)commandBuffers!.Length, commandBuffersPtr);
         }
 
         vk!.DestroyPipeline(device, graphicsPipeline, null);
@@ -164,6 +169,20 @@ unsafe class HelloTriangleApplication
         }
 
         khrSwapChain!.DestroySwapchain(device, swapChain, null);
+    }
+
+    private void CleanUp()
+    {
+        CleanUpSwapChain();
+
+        for (int i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
+        {
+            vk!.DestroySemaphore(device, renderFinishedSemaphores![i], null);
+            vk!.DestroySemaphore(device, imageAvailableSemaphores![i], null);
+            vk!.DestroyFence(device, inFlightFences![i], null);
+        }
+
+        vk!.DestroyCommandPool(device, commandPool, null);
 
         vk!.DestroyDevice(device, null);
 
@@ -178,6 +197,30 @@ unsafe class HelloTriangleApplication
         vk!.Dispose();
 
         window?.Dispose();
+    }
+
+    private void RecreateSwapChain()
+    {
+        Vector2D<int> framebufferSize = window!.FramebufferSize;
+
+        while (framebufferSize.X == 0 || framebufferSize.Y == 0)
+        {
+            framebufferSize = window.FramebufferSize;
+            window.DoEvents();
+        }
+
+        vk!.DeviceWaitIdle(device);
+
+        CleanUpSwapChain();
+
+        CreateSwapChain();
+        CreateImageViews();
+        CreateRenderPass();
+        CreateGraphicsPipeline();
+        CreateFramebuffers();
+        CreateCommandBuffers();
+
+        imagesInFlight = new Fence[swapChainImages!.Length];
     }
 
     private void CreateInstance()
@@ -422,8 +465,6 @@ unsafe class HelloTriangleApplication
             CompositeAlpha = CompositeAlphaFlagsKHR.CompositeAlphaOpaqueBitKhr,
             PresentMode = presentMode,
             Clipped = true,
-
-            OldSwapchain = default
         };
 
         if (!vk!.TryGetDeviceExtension(instance, device, out khrSwapChain))
@@ -832,7 +873,17 @@ unsafe class HelloTriangleApplication
         vk!.WaitForFences(device, 1, inFlightFences![currentFrame], true, ulong.MaxValue);
 
         uint imageIndex = 0;
-        khrSwapChain!.AcquireNextImage(device, swapChain, ulong.MaxValue, imageAvailableSemaphores![currentFrame], default, ref imageIndex);
+        var result = khrSwapChain!.AcquireNextImage(device, swapChain, ulong.MaxValue, imageAvailableSemaphores![currentFrame], default, ref imageIndex);
+
+        if(result == Result.ErrorOutOfDateKhr)
+        {
+            RecreateSwapChain();
+            return;
+        }
+        else if(result != Result.Success && result != Result.SuboptimalKhr)
+        {
+            throw new Exception("failed to acquire swap chain image!");
+        }
 
         if(imagesInFlight![imageIndex].Handle != default)
         {
@@ -888,7 +939,17 @@ unsafe class HelloTriangleApplication
             PImageIndices = &imageIndex
         };
 
-        khrSwapChain.QueuePresent(presentQueue, presentInfo);
+        result = khrSwapChain.QueuePresent(presentQueue, presentInfo);
+
+        if(result == Result.ErrorOutOfDateKhr || result == Result.SuboptimalKhr || frameBufferResized)
+        {
+            frameBufferResized = false;
+            RecreateSwapChain();
+        }
+        else if(result != Result.Success)
+        {
+            throw new Exception("failed to present swap chain image!");
+        }
 
         currentFrame = (currentFrame + 1) % MAX_FRAMES_IN_FLIGHT;
 
