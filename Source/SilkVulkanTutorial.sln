@@ -41,6 +41,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "14_CommandBuffers", "14_Com
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "15_HelloTriangle", "15_HelloTriangle\15_HelloTriangle.csproj", "{335BCBAB-CD9E-43CB-A9EE-2D771548BBCD}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "16_SwapChainRecreation", "16_SwapChainRecreation\16_SwapChainRecreation.csproj", "{6D5157A5-267C-4903-94B3-65258DDA7479}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -111,6 +113,10 @@ Global
 		{335BCBAB-CD9E-43CB-A9EE-2D771548BBCD}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{335BCBAB-CD9E-43CB-A9EE-2D771548BBCD}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{335BCBAB-CD9E-43CB-A9EE-2D771548BBCD}.Release|Any CPU.Build.0 = Release|Any CPU
+		{6D5157A5-267C-4903-94B3-65258DDA7479}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6D5157A5-267C-4903-94B3-65258DDA7479}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6D5157A5-267C-4903-94B3-65258DDA7479}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6D5157A5-267C-4903-94B3-65258DDA7479}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
