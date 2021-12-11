@@ -11,7 +11,6 @@ using Silk.NET.Vulkan.Extensions.KHR;
 using Silk.NET.Windowing;
 using Semaphore = Silk.NET.Vulkan.Semaphore;
 using Buffer = Silk.NET.Vulkan.Buffer;
-using System;
 
 var app = new HelloTriangleApplication();
 app.Run();
