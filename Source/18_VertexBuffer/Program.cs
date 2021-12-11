@@ -524,12 +524,15 @@ unsafe class HelloTriangleApplication
             Clipped = true,
         };
 
-        if (!vk!.TryGetDeviceExtension(instance, device, out khrSwapChain))
+        if (khrSwapChain is null)
         {
-            throw new NotSupportedException("VK_KHR_swapchain extension not found.");
+            if (!vk!.TryGetDeviceExtension(instance, device, out khrSwapChain))
+            {
+                throw new NotSupportedException("VK_KHR_swapchain extension not found.");
+            }
         }
 
-        if(khrSwapChain!.CreateSwapchain(device, creatInfo, null, out swapChain) != Result.Success)
+        if (khrSwapChain!.CreateSwapchain(device, creatInfo, null, out swapChain) != Result.Success)
         {
             throw new Exception("failed to create swap chain!");
         }
