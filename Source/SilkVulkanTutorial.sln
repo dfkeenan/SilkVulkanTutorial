@@ -47,6 +47,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "17_VertexInput", "17_Vertex
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "18_VertexBuffer", "18_VertexBuffer\18_VertexBuffer.csproj", "{168D28F6-B62B-4612-8C64-DC2929A9E9B6}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "19_StagingBuffer", "19_StagingBuffer\19_StagingBuffer.csproj", "{C1006FA3-360D-4765-9C96-A7F6BA8A2848}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -129,6 +131,10 @@ Global
 		{168D28F6-B62B-4612-8C64-DC2929A9E9B6}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{168D28F6-B62B-4612-8C64-DC2929A9E9B6}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{168D28F6-B62B-4612-8C64-DC2929A9E9B6}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C1006FA3-360D-4765-9C96-A7F6BA8A2848}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C1006FA3-360D-4765-9C96-A7F6BA8A2848}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C1006FA3-360D-4765-9C96-A7F6BA8A2848}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C1006FA3-360D-4765-9C96-A7F6BA8A2848}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
