@@ -221,12 +221,12 @@ unsafe class HelloTriangleApplication
 
     private void CreateLogicalDevice()
     {
-        var indicies = FindQueueFamilies(physicalDevice);
+        var indices = FindQueueFamilies(physicalDevice);
 
         DeviceQueueCreateInfo queueCreateInfo = new()
         {
             SType = StructureType.DeviceQueueCreateInfo,
-            QueueFamilyIndex = indicies.GraphicsFamily!.Value,
+            QueueFamilyIndex = indices.GraphicsFamily!.Value,
             QueueCount = 1
         };
 
@@ -261,7 +261,7 @@ unsafe class HelloTriangleApplication
             throw new Exception("failed to create logical device!");
         }
 
-        vk!.GetDeviceQueue(device, indicies.GraphicsFamily!.Value, 0, out graphicsQueue);
+        vk!.GetDeviceQueue(device, indices.GraphicsFamily!.Value, 0, out graphicsQueue);
 
         if (EnableValidationLayers)
         {
@@ -271,9 +271,9 @@ unsafe class HelloTriangleApplication
 
     private bool IsDeviceSuitable(PhysicalDevice device)
     {
-        var indicies = FindQueueFamilies(device);
+        var indices = FindQueueFamilies(device);
 
-        return indicies.IsComplete();
+        return indices.IsComplete();
     }
 
     private QueueFamilyIndices FindQueueFamilies(PhysicalDevice device)

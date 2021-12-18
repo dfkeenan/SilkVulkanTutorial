@@ -353,9 +353,9 @@ unsafe class HelloTriangleApplication
 
     private void CreateLogicalDevice()
     {
-        var indicies = FindQueueFamilies(physicalDevice);
+        var indices = FindQueueFamilies(physicalDevice);
 
-        var uniqueQueueFamilies = new[] { indicies.GraphicsFamily!.Value, indicies.PresentFamily!.Value };
+        var uniqueQueueFamilies = new[] { indices.GraphicsFamily!.Value, indices.PresentFamily!.Value };
 
         using var mem = GlobalMemory.Allocate(uniqueQueueFamilies.Length * sizeof(DeviceQueueCreateInfo));
         var queueCreateInfos = (DeviceQueueCreateInfo*)Unsafe.AsPointer(ref mem.GetPinnableReference());
@@ -403,8 +403,8 @@ unsafe class HelloTriangleApplication
             throw new Exception("failed to create logical device!");
         }
 
-        vk!.GetDeviceQueue(device, indicies.GraphicsFamily!.Value, 0, out graphicsQueue);
-        vk!.GetDeviceQueue(device, indicies.PresentFamily!.Value, 0, out presentQueue);
+        vk!.GetDeviceQueue(device, indices.GraphicsFamily!.Value, 0, out graphicsQueue);
+        vk!.GetDeviceQueue(device, indices.PresentFamily!.Value, 0, out presentQueue);
 
         if (EnableValidationLayers)
         {
@@ -442,10 +442,10 @@ unsafe class HelloTriangleApplication
             ImageUsage = ImageUsageFlags.ImageUsageColorAttachmentBit,
         };
 
-        var indicies = FindQueueFamilies(physicalDevice);
-        var queueFamilyIndices = stackalloc[] { indicies.GraphicsFamily!.Value, indicies.PresentFamily!.Value };
+        var indices = FindQueueFamilies(physicalDevice);
+        var queueFamilyIndices = stackalloc[] { indices.GraphicsFamily!.Value, indices.PresentFamily!.Value };
 
-        if (indicies.GraphicsFamily != indicies.PresentFamily)
+        if (indices.GraphicsFamily != indices.PresentFamily)
         {
             creatInfo = creatInfo with
             {
@@ -1074,7 +1074,7 @@ unsafe class HelloTriangleApplication
 
     private bool IsDeviceSuitable(PhysicalDevice device)
     {
-        var indicies = FindQueueFamilies(device);
+        var indices = FindQueueFamilies(device);
 
         bool extensionsSupported = CheckDeviceExtensionsSupport(device);
 
@@ -1085,7 +1085,7 @@ unsafe class HelloTriangleApplication
             swapChainAdequate =  swapChainSupport.Formats.Any() && swapChainSupport.PresentModes.Any();
         }
 
-        return indicies.IsComplete() && extensionsSupported && swapChainAdequate;
+        return indices.IsComplete() && extensionsSupported && swapChainAdequate;
     }
 
     private bool CheckDeviceExtensionsSupport(PhysicalDevice device)

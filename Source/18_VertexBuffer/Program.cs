@@ -136,7 +136,7 @@ unsafe class HelloTriangleApplication
 
     private bool frameBufferResized = false;
 
-    private Vertex[] verticies = new Vertex[]
+    private Vertex[] vertices = new Vertex[]
     {
         new Vertex { pos = new Vector2D<float>(0.0f,-0.5f), color = new Vector3D<float>(1.0f, 0.0f, 0.0f) },
         new Vertex { pos = new Vector2D<float>(0.5f,0.5f), color = new Vector3D<float>(0.0f, 1.0f, 0.0f) },
@@ -410,9 +410,9 @@ unsafe class HelloTriangleApplication
 
     private void CreateLogicalDevice()
     {
-        var indicies = FindQueueFamilies(physicalDevice);
+        var indices = FindQueueFamilies(physicalDevice);
 
-        var uniqueQueueFamilies = new[] { indicies.GraphicsFamily!.Value, indicies.PresentFamily!.Value };
+        var uniqueQueueFamilies = new[] { indices.GraphicsFamily!.Value, indices.PresentFamily!.Value };
 
         using var mem = GlobalMemory.Allocate(uniqueQueueFamilies.Length * sizeof(DeviceQueueCreateInfo));
         var queueCreateInfos = (DeviceQueueCreateInfo*)Unsafe.AsPointer(ref mem.GetPinnableReference());
@@ -460,8 +460,8 @@ unsafe class HelloTriangleApplication
             throw new Exception("failed to create logical device!");
         }
 
-        vk!.GetDeviceQueue(device, indicies.GraphicsFamily!.Value, 0, out graphicsQueue);
-        vk!.GetDeviceQueue(device, indicies.PresentFamily!.Value, 0, out presentQueue);
+        vk!.GetDeviceQueue(device, indices.GraphicsFamily!.Value, 0, out graphicsQueue);
+        vk!.GetDeviceQueue(device, indices.PresentFamily!.Value, 0, out presentQueue);
 
         if (EnableValidationLayers)
         {
@@ -499,10 +499,10 @@ unsafe class HelloTriangleApplication
             ImageUsage = ImageUsageFlags.ImageUsageColorAttachmentBit,
         };
 
-        var indicies = FindQueueFamilies(physicalDevice);
-        var queueFamilyIndices = stackalloc[] { indicies.GraphicsFamily!.Value, indicies.PresentFamily!.Value };
+        var indices = FindQueueFamilies(physicalDevice);
+        var queueFamilyIndices = stackalloc[] { indices.GraphicsFamily!.Value, indices.PresentFamily!.Value };
 
-        if (indicies.GraphicsFamily != indicies.PresentFamily)
+        if (indices.GraphicsFamily != indices.PresentFamily)
         {
             creatInfo = creatInfo with
             {
@@ -843,7 +843,7 @@ unsafe class HelloTriangleApplication
         BufferCreateInfo bufferInfo = new()
         {
             SType = StructureType.BufferCreateInfo,
-            Size = (ulong)(sizeof(Vertex) * verticies.Length),
+            Size = (ulong)(sizeof(Vertex) * vertices.Length),
             Usage = BufferUsageFlags.BufferUsageVertexBufferBit,
             SharingMode = SharingMode.Exclusive,
         };
@@ -878,7 +878,7 @@ unsafe class HelloTriangleApplication
 
         void* data;
         vk!.MapMemory(device, vertexBufferMemory, 0, bufferInfo.Size, 0, &data);
-            verticies.AsSpan().CopyTo(new Span<Vertex>(data, verticies.Length));
+            vertices.AsSpan().CopyTo(new Span<Vertex>(data, vertices.Length));
         vk!.UnmapMemory(device, vertexBufferMemory);
     }
 
@@ -964,7 +964,7 @@ unsafe class HelloTriangleApplication
                     vk!.CmdBindVertexBuffers(commandBuffers[i], 0, 1, vertexBuffersPtr, offsetsPtr);
                 }
 
-                vk!.CmdDraw(commandBuffers[i], (uint)verticies.Length, 1, 0, 0);
+                vk!.CmdDraw(commandBuffers[i], (uint)vertices.Length, 1, 0, 0);
 
             vk!.CmdEndRenderPass(commandBuffers[i]);
 
@@ -1208,7 +1208,7 @@ unsafe class HelloTriangleApplication
 
     private bool IsDeviceSuitable(PhysicalDevice device)
     {
-        var indicies = FindQueueFamilies(device);
+        var indices = FindQueueFamilies(device);
 
         bool extensionsSupported = CheckDeviceExtensionsSupport(device);
 
@@ -1219,7 +1219,7 @@ unsafe class HelloTriangleApplication
             swapChainAdequate =  swapChainSupport.Formats.Any() && swapChainSupport.PresentModes.Any();
         }
 
-        return indicies.IsComplete() && extensionsSupported && swapChainAdequate;
+        return indices.IsComplete() && extensionsSupported && swapChainAdequate;
     }
 
     private bool CheckDeviceExtensionsSupport(PhysicalDevice device)

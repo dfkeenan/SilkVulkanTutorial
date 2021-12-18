@@ -215,9 +215,9 @@ unsafe class HelloTriangleApplication
 
     private bool IsDeviceSuitable(PhysicalDevice device)
     {
-        var indicies = FindQueueFamilies(device);
+        var indices = FindQueueFamilies(device);
 
-        return indicies.IsComplete();
+        return indices.IsComplete();
     }
 
     private QueueFamilyIndices FindQueueFamilies(PhysicalDevice device)

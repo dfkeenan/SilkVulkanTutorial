@@ -155,7 +155,7 @@ unsafe class HelloTriangleApplication
 
     private bool frameBufferResized = false;
 
-    private Vertex[] verticies = new Vertex[]
+    private Vertex[] vertices = new Vertex[]
     {
         new Vertex { pos = new Vector2D<float>(-0.5f,-0.5f), color = new Vector3D<float>(1.0f, 0.0f, 0.0f) },
         new Vertex { pos = new Vector2D<float>(0.5f,-0.5f), color = new Vector3D<float>(0.0f, 1.0f, 0.0f) },
@@ -163,7 +163,7 @@ unsafe class HelloTriangleApplication
         new Vertex { pos = new Vector2D<float>(-0.5f,0.5f), color = new Vector3D<float>(1.0f, 1.0f, 1.0f) },
     };
 
-    private ushort[] indicies = new ushort[]
+    private ushort[] indices = new ushort[]
     {
         0, 1, 2, 2, 3, 0
     };
@@ -460,9 +460,9 @@ unsafe class HelloTriangleApplication
 
     private void CreateLogicalDevice()
     {
-        var indicies = FindQueueFamilies(physicalDevice);
+        var indices = FindQueueFamilies(physicalDevice);
 
-        var uniqueQueueFamilies = new[] { indicies.GraphicsFamily!.Value, indicies.PresentFamily!.Value };
+        var uniqueQueueFamilies = new[] { indices.GraphicsFamily!.Value, indices.PresentFamily!.Value };
 
         using var mem = GlobalMemory.Allocate(uniqueQueueFamilies.Length * sizeof(DeviceQueueCreateInfo));
         var queueCreateInfos = (DeviceQueueCreateInfo*)Unsafe.AsPointer(ref mem.GetPinnableReference());
@@ -510,8 +510,8 @@ unsafe class HelloTriangleApplication
             throw new Exception("failed to create logical device!");
         }
 
-        vk!.GetDeviceQueue(device, indicies.GraphicsFamily!.Value, 0, out graphicsQueue);
-        vk!.GetDeviceQueue(device, indicies.PresentFamily!.Value, 0, out presentQueue);
+        vk!.GetDeviceQueue(device, indices.GraphicsFamily!.Value, 0, out graphicsQueue);
+        vk!.GetDeviceQueue(device, indices.PresentFamily!.Value, 0, out presentQueue);
 
         if (EnableValidationLayers)
         {
@@ -549,10 +549,10 @@ unsafe class HelloTriangleApplication
             ImageUsage = ImageUsageFlags.ImageUsageColorAttachmentBit,
         };
 
-        var indicies = FindQueueFamilies(physicalDevice);
-        var queueFamilyIndices = stackalloc[] { indicies.GraphicsFamily!.Value, indicies.PresentFamily!.Value };
+        var indices = FindQueueFamilies(physicalDevice);
+        var queueFamilyIndices = stackalloc[] { indices.GraphicsFamily!.Value, indices.PresentFamily!.Value };
 
-        if (indicies.GraphicsFamily != indicies.PresentFamily)
+        if (indices.GraphicsFamily != indices.PresentFamily)
         {
             creatInfo = creatInfo with
             {
@@ -1080,7 +1080,7 @@ unsafe class HelloTriangleApplication
 
     private void CreateVertexBuffer()
     {
-        ulong bufferSize = (ulong)(Unsafe.SizeOf<Vertex>() * verticies.Length);
+        ulong bufferSize = (ulong)(Unsafe.SizeOf<Vertex>() * vertices.Length);
 
         Buffer stagingBuffer = default;
         DeviceMemory stagingBufferMemory = default;
@@ -1088,7 +1088,7 @@ unsafe class HelloTriangleApplication
         
         void* data;
         vk!.MapMemory(device, stagingBufferMemory, 0, bufferSize, 0, &data);
-            verticies.AsSpan().CopyTo(new Span<Vertex>(data, verticies.Length));
+            vertices.AsSpan().CopyTo(new Span<Vertex>(data, vertices.Length));
         vk!.UnmapMemory(device, stagingBufferMemory);
 
         CreateBuffer(bufferSize, BufferUsageFlags.BufferUsageTransferDstBit | BufferUsageFlags.BufferUsageVertexBufferBit, MemoryPropertyFlags.MemoryPropertyDeviceLocalBit, ref vertexBuffer, ref vertexBufferMemory);
@@ -1101,7 +1101,7 @@ unsafe class HelloTriangleApplication
 
     private void CreateIndexBuffer()
     {
-        ulong bufferSize = (ulong)(Unsafe.SizeOf<ushort>() * indicies.Length);
+        ulong bufferSize = (ulong)(Unsafe.SizeOf<ushort>() * indices.Length);
 
         Buffer stagingBuffer = default;
         DeviceMemory stagingBufferMemory = default;
@@ -1109,7 +1109,7 @@ unsafe class HelloTriangleApplication
 
         void* data;
         vk!.MapMemory(device, stagingBufferMemory, 0, bufferSize, 0, &data);
-            indicies.AsSpan().CopyTo(new Span<ushort>(data, indicies.Length));
+            indices.AsSpan().CopyTo(new Span<ushort>(data, indices.Length));
         vk!.UnmapMemory(device, stagingBufferMemory);
 
         CreateBuffer(bufferSize, BufferUsageFlags.BufferUsageTransferDstBit | BufferUsageFlags.BufferUsageIndexBufferBit, MemoryPropertyFlags.MemoryPropertyDeviceLocalBit, ref indexBuffer, ref indexBufferMemory);
@@ -1393,7 +1393,7 @@ unsafe class HelloTriangleApplication
 
                 vk!.CmdBindDescriptorSets(commandBuffers[i], PipelineBindPoint.Graphics, pipelineLayout, 0, 1, descriptorSets![i], 0, null);
 
-                vk!.CmdDrawIndexed(commandBuffers[i], (uint)indicies.Length, 1, 0, 0, 0);
+                vk!.CmdDrawIndexed(commandBuffers[i], (uint)indices.Length, 1, 0, 0, 0);
 
             vk!.CmdEndRenderPass(commandBuffers[i]);
 
@@ -1660,7 +1660,7 @@ unsafe class HelloTriangleApplication
 
     private bool IsDeviceSuitable(PhysicalDevice device)
     {
-        var indicies = FindQueueFamilies(device);
+        var indices = FindQueueFamilies(device);
 
         bool extensionsSupported = CheckDeviceExtensionsSupport(device);
 
@@ -1671,7 +1671,7 @@ unsafe class HelloTriangleApplication
             swapChainAdequate =  swapChainSupport.Formats.Any() && swapChainSupport.PresentModes.Any();
         }
 
-        return indicies.IsComplete() && extensionsSupported && swapChainAdequate;
+        return indices.IsComplete() && extensionsSupported && swapChainAdequate;
     }
 
     private bool CheckDeviceExtensionsSupport(PhysicalDevice device)
