@@ -37,6 +37,7 @@ struct Vertex
 {
     public Vector2D<float> pos;
     public Vector3D<float> color;
+    public Vector2D<float> textCoord;
 
     public static VertexInputBindingDescription GetBindingDescription()
     {
@@ -67,6 +68,13 @@ struct Vertex
                 Location = 1,
                 Format = Format.R32G32B32Sfloat,
                 Offset = (uint)Marshal.OffsetOf<Vertex>(nameof(color)),
+            },
+            new VertexInputAttributeDescription()
+            {
+                Binding = 0,
+                Location = 2,
+                Format = Format.R32G32Sfloat,
+                Offset = (uint)Marshal.OffsetOf<Vertex>(nameof(textCoord)),
             }
         };
 
@@ -159,10 +167,10 @@ unsafe class HelloTriangleApplication
 
     private Vertex[] verticies = new Vertex[]
     {
-        new Vertex { pos = new Vector2D<float>(-0.5f,-0.5f), color = new Vector3D<float>(1.0f, 0.0f, 0.0f) },
-        new Vertex { pos = new Vector2D<float>(0.5f,-0.5f), color = new Vector3D<float>(0.0f, 1.0f, 0.0f) },
-        new Vertex { pos = new Vector2D<float>(0.5f,0.5f), color = new Vector3D<float>(0.0f, 0.0f, 1.0f) },
-        new Vertex { pos = new Vector2D<float>(-0.5f,0.5f), color = new Vector3D<float>(1.0f, 1.0f, 1.0f) },
+        new Vertex { pos = new Vector2D<float>(-0.5f,-0.5f), color = new Vector3D<float>(1.0f, 0.0f, 0.0f), textCoord = new Vector2D<float>(1.0f, 0.0f) },
+        new Vertex { pos = new Vector2D<float>(0.5f,-0.5f), color = new Vector3D<float>(0.0f, 1.0f, 0.0f), textCoord = new Vector2D<float>(0.0f, 0.0f) },
+        new Vertex { pos = new Vector2D<float>(0.5f,0.5f), color = new Vector3D<float>(0.0f, 0.0f, 1.0f), textCoord = new Vector2D<float>(0.0f, 1.0f) },
+        new Vertex { pos = new Vector2D<float>(-0.5f,0.5f), color = new Vector3D<float>(1.0f, 1.0f, 1.0f), textCoord = new Vector2D<float>(1.0f, 1.0f) },
     };
 
     private ushort[] indicies = new ushort[]
@@ -684,16 +692,28 @@ unsafe class HelloTriangleApplication
             StageFlags = ShaderStageFlags.ShaderStageVertexBit,
         };
 
-        DescriptorSetLayoutCreateInfo layoutInfo = new()
+        DescriptorSetLayoutBinding samplerLayoutBinding = new()
         {
-            SType = StructureType.DescriptorSetLayoutCreateInfo,
-            BindingCount = 1,
-            PBindings = &uboLayoutBinding,
+            Binding = 1,
+            DescriptorCount = 1,
+            DescriptorType = DescriptorType.CombinedImageSampler,
+            PImmutableSamplers = null,
+            StageFlags = ShaderStageFlags.ShaderStageFragmentBit,
         };
 
+        var bindings = new DescriptorSetLayoutBinding[] { uboLayoutBinding, samplerLayoutBinding };
+        
+        fixed(DescriptorSetLayoutBinding* bindingsPtr = bindings)
         fixed(DescriptorSetLayout* descriptorSetLayoutPtr = &descriptorSetLayout)
         {
-            if(vk!.CreateDescriptorSetLayout(device, layoutInfo, null, descriptorSetLayoutPtr) != Result.Success)
+            DescriptorSetLayoutCreateInfo layoutInfo = new()
+            {
+                SType = StructureType.DescriptorSetLayoutCreateInfo,
+                BindingCount = (uint)bindings.Length,
+                PBindings = bindingsPtr,
+            };
+
+            if (vk!.CreateDescriptorSetLayout(device, layoutInfo, null, descriptorSetLayoutPtr) != Result.Success)
             {
                 throw new Exception("failed to create descriptor set layout!");
             }
@@ -1193,24 +1213,33 @@ unsafe class HelloTriangleApplication
 
     private void CreateDescriptorPool()
     {
-        DescriptorPoolSize poolSize = new()
+        var poolSizes = new DescriptorPoolSize[]
         {
-            Type = DescriptorType.UniformBuffer,
-            DescriptorCount = (uint)swapChainImages!.Length,
+            new DescriptorPoolSize()
+            {
+                Type = DescriptorType.UniformBuffer,
+                DescriptorCount = (uint)swapChainImages!.Length,
+            },
+            new DescriptorPoolSize()
+            {
+                Type = DescriptorType.CombinedImageSampler,
+                DescriptorCount = (uint)swapChainImages!.Length,
+            }
         };
-
-
-        DescriptorPoolCreateInfo poolInfo = new()
-        {
-            SType = StructureType.DescriptorPoolCreateInfo,
-            PoolSizeCount = 1,
-            PPoolSizes = &poolSize,
-            MaxSets = (uint)swapChainImages!.Length,
-        };
-
+        
+        fixed (DescriptorPoolSize* poolSizesPtr = poolSizes)
         fixed (DescriptorPool* descriptorPoolPtr = &descriptorPool)
         {
-            if(vk!.CreateDescriptorPool(device, poolInfo, null, descriptorPoolPtr) != Result.Success)
+
+            DescriptorPoolCreateInfo poolInfo = new()
+            {
+                SType = StructureType.DescriptorPoolCreateInfo,
+                PoolSizeCount = (uint)poolSizes.Length,
+                PPoolSizes = poolSizesPtr,
+                MaxSets = (uint)swapChainImages!.Length,
+            };
+
+            if (vk!.CreateDescriptorPool(device, poolInfo, null, descriptorPoolPtr) != Result.Success)
             {
                 throw new Exception("failed to create descriptor pool!");
             }
@@ -1254,18 +1283,41 @@ unsafe class HelloTriangleApplication
 
             };
 
-            WriteDescriptorSet descriptorWrite = new()
+            DescriptorImageInfo imageInfo = new()
             {
-                SType = StructureType.WriteDescriptorSet,
-                DstSet = descriptorSets[i],
-                DstBinding = 0,
-                DstArrayElement = 0,
-                DescriptorType = DescriptorType.UniformBuffer,
-                DescriptorCount = 1,
-                PBufferInfo = &bufferInfo,
+                ImageLayout = ImageLayout.ShaderReadOnlyOptimal,
+                ImageView = textureImageView,
+                Sampler = textureSampler,
             };
 
-            vk!.UpdateDescriptorSets(device, 1, descriptorWrite, 0, null);
+            var descriptorWrites = new WriteDescriptorSet[]
+            {
+                new()
+                {
+                    SType = StructureType.WriteDescriptorSet,
+                    DstSet = descriptorSets[i],
+                    DstBinding = 0,
+                    DstArrayElement = 0,
+                    DescriptorType = DescriptorType.UniformBuffer,
+                    DescriptorCount = 1,
+                    PBufferInfo = &bufferInfo,
+                },
+                new()
+                {
+                    SType = StructureType.WriteDescriptorSet,
+                    DstSet = descriptorSets[i],
+                    DstBinding = 1,
+                    DstArrayElement = 0,
+                    DescriptorType = DescriptorType.CombinedImageSampler,
+                    DescriptorCount = 1,
+                    PImageInfo = &imageInfo,
+                }
+            };
+
+            fixed (WriteDescriptorSet* descriptorWritesPtr = descriptorWrites)
+            {
+                vk!.UpdateDescriptorSets(device, (uint)descriptorWrites.Length, descriptorWritesPtr, 0, null);
+            }
         }
 
     }
