@@ -133,6 +133,8 @@ unsafe class HelloTriangleApplication
 
     private Image textureImage;
     private DeviceMemory textureImageMemory;
+    private ImageView textureImageView;
+    private Sampler textureSampler;
 
     private Buffer vertexBuffer;
     private DeviceMemory vertexBufferMemory;
@@ -216,6 +218,8 @@ unsafe class HelloTriangleApplication
         CreateFramebuffers();
         CreateCommandPool();
         CreateTextureImage();
+        CreateTextureImageView();
+        CreateTextureSampler();
         CreateVertexBuffer();
         CreateIndexBuffer();
         CreateUniformBuffers();
@@ -267,6 +271,9 @@ unsafe class HelloTriangleApplication
     private void CleanUp()
     {
         CleanUpSwapChain();
+
+        vk!.DestroySampler(device, textureSampler, null);
+        vk!.DestroyImageView(device, textureImageView, null);
 
         vk!.DestroyImage(device, textureImage, null);
         vk!.FreeMemory(device, textureImageMemory, null);
@@ -481,7 +488,11 @@ unsafe class HelloTriangleApplication
             queueCreateInfos[i].PQueuePriorities = &queuePriority;
         }
 
-        PhysicalDeviceFeatures deviceFeatures = new();
+        PhysicalDeviceFeatures deviceFeatures = new()
+        {
+            SamplerAnisotropy = true,
+        };
+
 
         DeviceCreateInfo createInfo = new()
         {
@@ -604,34 +615,8 @@ unsafe class HelloTriangleApplication
 
         for (int i = 0; i < swapChainImages.Length; i++)
         {
-            ImageViewCreateInfo createInfo = new()
-            {
-                SType = StructureType.ImageViewCreateInfo,
-                Image = swapChainImages[i],
-                ViewType = ImageViewType.ImageViewType2D,
-                Format = swapChainImageFormat,
-                Components =
-                {
-                    R = ComponentSwizzle.Identity,
-                    G = ComponentSwizzle.Identity,
-                    B = ComponentSwizzle.Identity,
-                    A = ComponentSwizzle.Identity,
-                },
-                SubresourceRange =
-                {
-                    AspectMask = ImageAspectFlags.ImageAspectColorBit,
-                    BaseMipLevel = 0,
-                    LevelCount = 1,
-                    BaseArrayLayer = 0,
-                    LayerCount = 1,
-                }
 
-            };
-
-            if(vk!.CreateImageView(device, createInfo, null, out swapChainImageViews[i]) != Result.Success)
-            {
-                throw new Exception("failed to create image views!");
-            }
+            swapChainImageViews[i] = CreateImageView(swapChainImages[i], swapChainImageFormat);
         }
     }
 
@@ -947,6 +932,78 @@ unsafe class HelloTriangleApplication
         vk!.FreeMemory(device, stagingBufferMemory, null);
     }
 
+    private void CreateTextureImageView()
+    {
+        textureImageView = CreateImageView(textureImage, Format.R8G8B8A8Srgb);
+    }
+
+    private void CreateTextureSampler()
+    {
+        PhysicalDeviceProperties properties;
+        vk!.GetPhysicalDeviceProperties(physicalDevice, out properties);
+
+        SamplerCreateInfo samplerInfo = new()
+        {
+            SType = StructureType.SamplerCreateInfo,
+            MagFilter = Filter.Linear,
+            MinFilter = Filter.Linear,
+            AddressModeU = SamplerAddressMode.Repeat,
+            AddressModeV = SamplerAddressMode.Repeat,
+            AddressModeW = SamplerAddressMode.Repeat,
+            AnisotropyEnable = true,
+            MaxAnisotropy = properties.Limits.MaxSamplerAnisotropy,
+            BorderColor = BorderColor.IntOpaqueBlack,
+            UnnormalizedCoordinates = false,
+            CompareEnable = false,
+            CompareOp = CompareOp.Always,
+            MipmapMode = SamplerMipmapMode.Linear,
+        };
+
+        fixed(Sampler* textureSamplerPtr = &textureSampler)
+        {
+            if(vk!.CreateSampler(device, samplerInfo, null, textureSamplerPtr) != Result.Success)
+            {
+                throw new Exception("failed to create texture sampler!");
+            }
+        }
+    }
+
+    private ImageView CreateImageView(Image image, Format format)
+    {
+        ImageViewCreateInfo createInfo = new()
+        {
+            SType = StructureType.ImageViewCreateInfo,
+            Image = image,
+            ViewType = ImageViewType.ImageViewType2D,
+            Format = format,
+            //Components =
+            //    {
+            //        R = ComponentSwizzle.Identity,
+            //        G = ComponentSwizzle.Identity,
+            //        B = ComponentSwizzle.Identity,
+            //        A = ComponentSwizzle.Identity,
+            //    },
+            SubresourceRange =
+                {
+                    AspectMask = ImageAspectFlags.ImageAspectColorBit,
+                    BaseMipLevel = 0,
+                    LevelCount = 1,
+                    BaseArrayLayer = 0,
+                    LayerCount = 1,
+                }
+
+        };
+
+        ImageView imageView = default;
+
+        if (vk!.CreateImageView(device, createInfo, null, out imageView) != Result.Success)
+        {
+            throw new Exception("failed to create image views!");
+        }
+
+        return imageView;
+    }
+
     private void CreateImage(uint width, uint height, Format format, ImageTiling tiling, ImageUsageFlags usage, MemoryPropertyFlags properties, ref Image image, ref DeviceMemory imageMemory)
     {
         ImageCreateInfo imageInfo = new()
@@ -1007,8 +1064,8 @@ unsafe class HelloTriangleApplication
             SType = StructureType.ImageMemoryBarrier,
             OldLayout = oldLayout,
             NewLayout = newLayout,
-            SrcQueueFamilyIndex = 0, //VK_QUEUE_FAMILY_IGNORED 
-            DstQueueFamilyIndex = 0,
+            SrcQueueFamilyIndex = Vk.QueueFamilyIgnored,
+            DstQueueFamilyIndex = Vk.QueueFamilyIgnored,
             Image = image,
             SubresourceRange =
             {
@@ -1671,7 +1728,10 @@ unsafe class HelloTriangleApplication
             swapChainAdequate =  swapChainSupport.Formats.Any() && swapChainSupport.PresentModes.Any();
         }
 
-        return indicies.IsComplete() && extensionsSupported && swapChainAdequate;
+        PhysicalDeviceFeatures supportedFeatures;
+        vk!.GetPhysicalDeviceFeatures(device, out supportedFeatures);
+
+        return indicies.IsComplete() && extensionsSupported && swapChainAdequate && supportedFeatures.SamplerAnisotropy;
     }
 
     private bool CheckDeviceExtensionsSupport(PhysicalDevice device)
