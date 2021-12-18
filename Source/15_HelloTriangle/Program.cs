@@ -82,11 +82,11 @@ unsafe class HelloTriangleApplication
     private CommandPool commandPool;
     private CommandBuffer[]? commandBuffers;
 
-    Semaphore[]? imageAvailableSemaphores;
-    Semaphore[]? renderFinishedSemaphores;
-    Fence[]? inFlightFences;
-    Fence[]? imagesInFlight;
-    int currentFrame = 0;
+    private Semaphore[]? imageAvailableSemaphores;
+    private Semaphore[]? renderFinishedSemaphores;
+    private Fence[]? inFlightFences;
+    private Fence[]? imagesInFlight;
+    private int currentFrame = 0;
 
     public void Run()
     {
