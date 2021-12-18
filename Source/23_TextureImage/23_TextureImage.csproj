@@ -1,0 +1,20 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+	<PropertyGroup>
+		<OutputType>WinExe</OutputType>
+		<TargetFramework>net6.0</TargetFramework>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<Nullable>enable</Nullable>
+		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<PackageReference Include="Silk.NET" Version="2.10.1" />
+		<PackageReference Include="Silk.NET.Vulkan.Extensions.EXT" Version="2.10.1" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<VertexShader Include="../21_DescriptorLayout/**/*.vert" />
+		<FragmentShader Include="../21_DescriptorLayout/**/*.frag" />
+	</ItemGroup>
+</Project>
