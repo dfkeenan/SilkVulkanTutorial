@@ -131,6 +131,9 @@ unsafe class HelloTriangleApplication
 
     private CommandPool commandPool;
 
+    private Image textureImage;
+    private DeviceMemory textureImageMemory;
+
     private Buffer vertexBuffer;
     private DeviceMemory vertexBufferMemory;
     private Buffer indexBuffer;
@@ -212,6 +215,7 @@ unsafe class HelloTriangleApplication
         CreateGraphicsPipeline();
         CreateFramebuffers();
         CreateCommandPool();
+        CreateTextureImage();
         CreateVertexBuffer();
         CreateIndexBuffer();
         CreateUniformBuffers();
@@ -263,6 +267,9 @@ unsafe class HelloTriangleApplication
     private void CleanUp()
     {
         CleanUpSwapChain();
+
+        vk!.DestroyImage(device, textureImage, null);
+        vk!.FreeMemory(device, textureImageMemory, null);
 
         vk!.DestroyDescriptorSetLayout(device, descriptorSetLayout, null);
 
@@ -910,6 +917,167 @@ unsafe class HelloTriangleApplication
         }
     }
 
+    private void CreateTextureImage()
+    {
+        using var img = (SixLabors.ImageSharp.Image<SixLabors.ImageSharp.PixelFormats.Rgba32>) SixLabors.ImageSharp.Image.Load("textures/texture.jpg");
+        
+        if(!img.TryGetSinglePixelSpan(out var pixels))
+        {
+            throw new Exception("failed to load texture image!");
+        }
+
+        ulong imageSize = (ulong)(pixels.Length * Unsafe.SizeOf<SixLabors.ImageSharp.PixelFormats.Rgba32>());
+
+        Buffer stagingBuffer = default;
+        DeviceMemory stagingBufferMemory = default;
+        CreateBuffer(imageSize, BufferUsageFlags.BufferUsageTransferSrcBit, MemoryPropertyFlags.MemoryPropertyHostVisibleBit | MemoryPropertyFlags.MemoryPropertyHostCoherentBit,ref stagingBuffer, ref stagingBufferMemory );
+
+        void* data;
+        vk!.MapMemory(device, stagingBufferMemory, 0, imageSize, 0, &data);
+        pixels.CopyTo(new Span<SixLabors.ImageSharp.PixelFormats.Rgba32>(data, pixels.Length));
+        vk!.UnmapMemory(device, stagingBufferMemory);
+
+        CreateImage((uint)img.Width, (uint)img.Height, Format.R8G8B8A8Srgb, ImageTiling.Optimal, ImageUsageFlags.ImageUsageTransferDstBit | ImageUsageFlags.ImageUsageSampledBit, MemoryPropertyFlags.MemoryPropertyDeviceLocalBit, ref textureImage, ref textureImageMemory);
+
+        TransitionImageLayout(textureImage, Format.R8G8B8A8Srgb, ImageLayout.Undefined, ImageLayout.TransferDstOptimal);
+        CopyBufferToImage(stagingBuffer, textureImage, (uint)img.Width, (uint)img.Height);
+        TransitionImageLayout(textureImage, Format.R8G8B8A8Srgb, ImageLayout.TransferDstOptimal, ImageLayout.ShaderReadOnlyOptimal);
+
+        vk!.DestroyBuffer(device, stagingBuffer, null);
+        vk!.FreeMemory(device, stagingBufferMemory, null);
+    }
+
+    private void CreateImage(uint width, uint height, Format format, ImageTiling tiling, ImageUsageFlags usage, MemoryPropertyFlags properties, ref Image image, ref DeviceMemory imageMemory)
+    {
+        ImageCreateInfo imageInfo = new()
+        {
+            SType = StructureType.ImageCreateInfo,
+            ImageType = ImageType.ImageType2D,
+            Extent =
+            {
+                Width = width,
+                Height = height,
+                Depth = 1,
+            },
+            MipLevels = 1,
+            ArrayLayers = 1,
+            Format = format,
+            Tiling = tiling,
+            InitialLayout = ImageLayout.Undefined,
+            Usage = usage,
+            Samples = SampleCountFlags.SampleCount1Bit,
+            SharingMode = SharingMode.Exclusive,
+        };
+
+        fixed (Image* imagePtr = &image)
+        {
+            if(vk!.CreateImage(device,imageInfo,null, imagePtr) != Result.Success)
+            {
+                throw new Exception("failed to create image!");
+            }
+        }
+
+        MemoryRequirements memRequirements;
+        vk!.GetImageMemoryRequirements(device, image, out memRequirements);
+
+        MemoryAllocateInfo allocInfo = new()
+        {
+            SType = StructureType.MemoryAllocateInfo,
+            AllocationSize = memRequirements.Size,
+            MemoryTypeIndex = FindMemoryType(memRequirements.MemoryTypeBits,properties),
+        };
+
+        fixed(DeviceMemory* imageMemoryPtr = &imageMemory) 
+        {
+            if (vk!.AllocateMemory(device, allocInfo, null, imageMemoryPtr) != Result.Success)
+            {
+                throw new Exception("failed to allocate image memory!");
+            }
+        }
+
+        vk!.BindImageMemory(device, image, imageMemory, 0);
+    }
+
+    private void TransitionImageLayout(Image image, Format format, ImageLayout oldLayout, ImageLayout newLayout)
+    {
+        CommandBuffer commandBuffer = BeginSingleTimeCommands();
+
+        ImageMemoryBarrier barrier = new()
+        {
+            SType = StructureType.ImageMemoryBarrier,
+            OldLayout = oldLayout,
+            NewLayout = newLayout,
+            SrcQueueFamilyIndex = 0, //VK_QUEUE_FAMILY_IGNORED 
+            DstQueueFamilyIndex = 0,
+            Image = image,
+            SubresourceRange =
+            {
+                AspectMask = ImageAspectFlags.ImageAspectColorBit,
+                BaseMipLevel = 0,
+                LevelCount = 1,
+                BaseArrayLayer = 0,
+                LayerCount = 1,
+            }
+        };
+
+        PipelineStageFlags sourceStage;
+        PipelineStageFlags destinationStage;
+
+        if(oldLayout == ImageLayout.Undefined && newLayout == ImageLayout.TransferDstOptimal)
+        {
+            barrier.SrcAccessMask = 0;
+            barrier.DstAccessMask = AccessFlags.AccessTransferWriteBit;
+
+            sourceStage = PipelineStageFlags.PipelineStageTopOfPipeBit;
+            destinationStage = PipelineStageFlags.PipelineStageTransferBit;
+        }
+        else if (oldLayout == ImageLayout.TransferDstOptimal && newLayout == ImageLayout.ShaderReadOnlyOptimal)
+        {
+            barrier.SrcAccessMask = AccessFlags.AccessTransferWriteBit;
+            barrier.DstAccessMask = AccessFlags.AccessShaderReadBit;
+
+            sourceStage = PipelineStageFlags.PipelineStageTransferBit;
+            destinationStage = PipelineStageFlags.PipelineStageFragmentShaderBit;
+        }
+        else
+        {
+            throw new Exception("unsupported layout transition!");
+        }
+
+        vk!.CmdPipelineBarrier(commandBuffer,sourceStage,destinationStage,0,0,null,0,null,1,barrier);
+
+        EndSingleTimeCommands(commandBuffer);
+
+    }
+
+    private void CopyBufferToImage(Buffer buffer, Image image, uint width, uint height)
+    {
+        CommandBuffer commandBuffer = BeginSingleTimeCommands();
+
+        BufferImageCopy region = new()
+        {
+            BufferOffset = 0,
+            BufferRowLength = 0,
+            BufferImageHeight = 0,
+            ImageSubresource =
+            {
+                AspectMask = ImageAspectFlags.ImageAspectColorBit,
+                MipLevel = 0,
+                BaseArrayLayer = 0,
+                LayerCount = 1,                
+            },
+            ImageOffset = new Offset3D(0,0,0),
+            ImageExtent = new Extent3D(width, height, 1),
+            
+        };
+
+        vk!.CmdCopyBufferToImage(commandBuffer, buffer, image, ImageLayout.TransferDstOptimal, 1, region);
+
+        EndSingleTimeCommands(commandBuffer);
+    }
+
+
+
     private void CreateVertexBuffer()
     {
         ulong bufferSize = (ulong)(Unsafe.SizeOf<Vertex>() * verticies.Length);
@@ -1084,7 +1252,7 @@ unsafe class HelloTriangleApplication
         vk!.BindBufferMemory(device, buffer, bufferMemory, 0);
     }
 
-    private void CopyBuffer(Buffer srcBuffer, Buffer dstBuffer, ulong size)
+    private CommandBuffer BeginSingleTimeCommands()
     {
         CommandBufferAllocateInfo allocateInfo = new()
         {
@@ -1105,13 +1273,11 @@ unsafe class HelloTriangleApplication
 
         vk!.BeginCommandBuffer(commandBuffer, beginInfo);
 
-            BufferCopy copyRegion = new()
-            {
-                Size = size,                
-            };
+        return commandBuffer;
+    }
 
-            vk!.CmdCopyBuffer(commandBuffer, srcBuffer, dstBuffer, 1, copyRegion);
-
+    private void EndSingleTimeCommands(CommandBuffer commandBuffer)
+    {
         vk!.EndCommandBuffer(commandBuffer);
 
         SubmitInfo submitInfo = new()
@@ -1125,6 +1291,20 @@ unsafe class HelloTriangleApplication
         vk!.QueueWaitIdle(graphicsQueue);
 
         vk!.FreeCommandBuffers(device, commandPool, 1, commandBuffer);
+    }
+
+    private void CopyBuffer(Buffer srcBuffer, Buffer dstBuffer, ulong size)
+    {
+        CommandBuffer commandBuffer = BeginSingleTimeCommands();
+
+        BufferCopy copyRegion = new()
+        {
+            Size = size,                
+        };
+
+        vk!.CmdCopyBuffer(commandBuffer, srcBuffer, dstBuffer, 1, copyRegion);
+
+        EndSingleTimeCommands(commandBuffer);
     }
 
     private uint FindMemoryType(uint typeFilter, MemoryPropertyFlags properties)
