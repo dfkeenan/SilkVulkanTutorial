@@ -1007,8 +1007,8 @@ unsafe class HelloTriangleApplication
             SType = StructureType.ImageMemoryBarrier,
             OldLayout = oldLayout,
             NewLayout = newLayout,
-            SrcQueueFamilyIndex = 0, //VK_QUEUE_FAMILY_IGNORED 
-            DstQueueFamilyIndex = 0,
+            SrcQueueFamilyIndex = Vk.QueueFamilyIgnored, 
+            DstQueueFamilyIndex = Vk.QueueFamilyIgnored,
             Image = image,
             SubresourceRange =
             {
