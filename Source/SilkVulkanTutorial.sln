@@ -57,6 +57,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "22_DescriptorSets", "22_Des
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "23_TextureImage", "23_TextureImage\23_TextureImage.csproj", "{1B643580-218A-4139-BCB2-39D97E933300}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "24_Sampler", "24_Sampler\24_Sampler.csproj", "{3E3E3F52-97A5-4573-A410-A4FEDA002A32}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -159,6 +161,10 @@ Global
 		{1B643580-218A-4139-BCB2-39D97E933300}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{1B643580-218A-4139-BCB2-39D97E933300}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{1B643580-218A-4139-BCB2-39D97E933300}.Release|Any CPU.Build.0 = Release|Any CPU
+		{3E3E3F52-97A5-4573-A410-A4FEDA002A32}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3E3E3F52-97A5-4573-A410-A4FEDA002A32}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3E3E3F52-97A5-4573-A410-A4FEDA002A32}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3E3E3F52-97A5-4573-A410-A4FEDA002A32}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
