@@ -11,6 +11,7 @@ using Silk.NET.Vulkan.Extensions.KHR;
 using Silk.NET.Windowing;
 using Semaphore = Silk.NET.Vulkan.Semaphore;
 using Buffer = Silk.NET.Vulkan.Buffer;
+using Silk.NET.Assimp;
 
 var app = new HelloTriangleApplication();
 app.Run();
@@ -94,6 +95,9 @@ unsafe class HelloTriangleApplication
     const int WIDTH = 800;
     const int HEIGHT = 600;
 
+    const string MODEL_PATH = @"Assets\viking_room.obj";
+    const string TEXTURE_PATH = @"Assets\viking_room.png";
+
     const int MAX_FRAMES_IN_FLIGHT = 2;
 
     bool EnableValidationLayers = true;
@@ -169,24 +173,9 @@ unsafe class HelloTriangleApplication
 
     private bool frameBufferResized = false;
 
-    private Vertex[] verticies = new Vertex[]
-    {
-        new Vertex { pos = new Vector3D<float>(-0.5f,-0.5f, 0.0f), color = new Vector3D<float>(1.0f, 0.0f, 0.0f), textCoord = new Vector2D<float>(1.0f, 0.0f) },
-        new Vertex { pos = new Vector3D<float>(0.5f,-0.5f, 0.0f), color = new Vector3D<float>(0.0f, 1.0f, 0.0f), textCoord = new Vector2D<float>(0.0f, 0.0f) },
-        new Vertex { pos = new Vector3D<float>(0.5f,0.5f, 0.0f), color = new Vector3D<float>(0.0f, 0.0f, 1.0f), textCoord = new Vector2D<float>(0.0f, 1.0f) },
-        new Vertex { pos = new Vector3D<float>(-0.5f,0.5f, 0.0f), color = new Vector3D<float>(1.0f, 1.0f, 1.0f), textCoord = new Vector2D<float>(1.0f, 1.0f) },
+    private Vertex[]? verticies;
 
-        new Vertex { pos = new Vector3D<float>(-0.5f,-0.5f, -0.5f), color = new Vector3D<float>(1.0f, 0.0f, 0.0f), textCoord = new Vector2D<float>(1.0f, 0.0f) },
-        new Vertex { pos = new Vector3D<float>(0.5f,-0.5f, -0.5f), color = new Vector3D<float>(0.0f, 1.0f, 0.0f), textCoord = new Vector2D<float>(0.0f, 0.0f) },
-        new Vertex { pos = new Vector3D<float>(0.5f,0.5f, -0.5f), color = new Vector3D<float>(0.0f, 0.0f, 1.0f), textCoord = new Vector2D<float>(0.0f, 1.0f) },
-        new Vertex { pos = new Vector3D<float>(-0.5f,0.5f, -0.5f), color = new Vector3D<float>(1.0f, 1.0f, 1.0f), textCoord = new Vector2D<float>(1.0f, 1.0f) },
-    };
-
-    private ushort[] indicies = new ushort[]
-    {
-        0, 1, 2, 2, 3, 0,
-        4, 5, 6, 6, 7, 4
-    };
+    private uint[]? indicies;
 
     public void Run()
     {
@@ -239,6 +228,7 @@ unsafe class HelloTriangleApplication
         CreateTextureImage();
         CreateTextureImageView();
         CreateTextureSampler();
+        LoadModel();
         CreateVertexBuffer();
         CreateIndexBuffer();
         CreateUniformBuffers();
@@ -762,8 +752,8 @@ unsafe class HelloTriangleApplication
 
     private void CreateGraphicsPipeline()
     {
-        var vertShaderCode = File.ReadAllBytes("shaders/vert.spv");
-        var fragShaderCode = File.ReadAllBytes("shaders/frag.spv");
+        var vertShaderCode = System.IO.File.ReadAllBytes("shaders/vert.spv");
+        var fragShaderCode = System.IO.File.ReadAllBytes("shaders/frag.spv");
 
         var vertShaderModule = CreateShaderModule(vertShaderCode);
         var fragShaderModule = CreateShaderModule(fragShaderCode);
@@ -1010,7 +1000,7 @@ unsafe class HelloTriangleApplication
 
     private void CreateTextureImage()
     {
-        using var img = (SixLabors.ImageSharp.Image<SixLabors.ImageSharp.PixelFormats.Rgba32>) SixLabors.ImageSharp.Image.Load("textures/texture.jpg");
+        using var img = (SixLabors.ImageSharp.Image<SixLabors.ImageSharp.PixelFormats.Rgba32>) SixLabors.ImageSharp.Image.Load(TEXTURE_PATH);
         
         if(!img.TryGetSinglePixelSpan(out var pixels))
         {
@@ -1239,11 +1229,72 @@ unsafe class HelloTriangleApplication
         EndSingleTimeCommands(commandBuffer);
     }
 
+    private void LoadModel()
+    {
+        using var assimp = Assimp.GetApi();
+        var scene = assimp.ImportFile(MODEL_PATH, (uint)PostProcessPreset.TargetRealTimeMaximumQuality);
+
+        var vertexMap = new Dictionary<Vertex, uint>();
+        var verticies = new List<Vertex>();
+        var indicies = new List<uint>();
+
+        VisitSceneNode(scene->MRootNode);
+
+        assimp.ReleaseImport(scene);
+
+        this.verticies = verticies.ToArray();
+        this.indicies = indicies.ToArray();
+
+        void VisitSceneNode(Node* node)
+        {
+            for (int m = 0; m < node->MNumMeshes; m++)
+            {
+                var mesh = scene->MMeshes[node->MMeshes[m]];
+
+                for (int f = 0; f < mesh->MNumFaces; f++)
+                {
+                    var face = mesh->MFaces[f];
+                    
+                    for (int i = 0; i < face.MNumIndices; i++)
+                    {
+                        uint index = face.MIndices[i];                      
+
+                        var position = mesh->MVertices[index];
+                        var texture = mesh->MTextureCoords[0][(int)index];
+
+                        Vertex vertex = new Vertex
+                        {
+                            pos = new Vector3D<float>(position.X, position.Y, position.Z),
+                            color = new Vector3D<float>(1, 1, 1),
+                            //Flip Y for OBJ in Vulkan
+                            textCoord = new Vector2D<float>(texture.X, 1.0f - texture.Y)
+                        };
+
+                        if(vertexMap.TryGetValue(vertex, out var meshIndex))
+                        {
+                            indicies.Add(meshIndex);
+                        }
+                        else
+                        {
+                            indicies.Add((uint)verticies.Count);
+                            vertexMap[vertex] = (uint)verticies.Count;
+                            verticies.Add(vertex);
+                        }                        
+                    }
+                }
+            }
+
+            for (int c = 0; c < node->MNumChildren; c++)
+            {
+                VisitSceneNode(node->MChildren[c]);
+            }
+        }
+    }
 
 
     private void CreateVertexBuffer()
     {
-        ulong bufferSize = (ulong)(Unsafe.SizeOf<Vertex>() * verticies.Length);
+        ulong bufferSize = (ulong)(Unsafe.SizeOf<Vertex>() * verticies!.Length);
 
         Buffer stagingBuffer = default;
         DeviceMemory stagingBufferMemory = default;
@@ -1264,7 +1315,7 @@ unsafe class HelloTriangleApplication
 
     private void CreateIndexBuffer()
     {
-        ulong bufferSize = (ulong)(Unsafe.SizeOf<ushort>() * indicies.Length);
+        ulong bufferSize = (ulong)(Unsafe.SizeOf<uint>() * indicies!.Length);
 
         Buffer stagingBuffer = default;
         DeviceMemory stagingBufferMemory = default;
@@ -1272,7 +1323,7 @@ unsafe class HelloTriangleApplication
 
         void* data;
         vk!.MapMemory(device, stagingBufferMemory, 0, bufferSize, 0, &data);
-            indicies.AsSpan().CopyTo(new Span<ushort>(data, indicies.Length));
+            indicies.AsSpan().CopyTo(new Span<uint>(data, indicies.Length));
         vk!.UnmapMemory(device, stagingBufferMemory);
 
         CreateBuffer(bufferSize, BufferUsageFlags.BufferUsageTransferDstBit | BufferUsageFlags.BufferUsageIndexBufferBit, MemoryPropertyFlags.MemoryPropertyDeviceLocalBit, ref indexBuffer, ref indexBufferMemory);
@@ -1595,11 +1646,11 @@ unsafe class HelloTriangleApplication
                     vk!.CmdBindVertexBuffers(commandBuffers[i], 0, 1, vertexBuffersPtr, offsetsPtr);
                 }
 
-                vk!.CmdBindIndexBuffer(commandBuffers[i], indexBuffer, 0, IndexType.Uint16);
+                vk!.CmdBindIndexBuffer(commandBuffers[i], indexBuffer, 0, IndexType.Uint32);
 
                 vk!.CmdBindDescriptorSets(commandBuffers[i], PipelineBindPoint.Graphics, pipelineLayout, 0, 1, descriptorSets![i], 0, null);
 
-                vk!.CmdDrawIndexed(commandBuffers[i], (uint)indicies.Length, 1, 0, 0, 0);
+                vk!.CmdDrawIndexed(commandBuffers[i], (uint)indicies!.Length, 1, 0, 0, 0);
 
             vk!.CmdEndRenderPass(commandBuffers[i]);
             
