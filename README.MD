@@ -2,6 +2,10 @@
 
 C# [Silk.NET](https://github.com/dotnet/Silk.NET) port of the [great tutorial by Alexander Overvoorde](https://vulkan-tutorial.com/). The original code can be found [here](https://github.com/Overv/VulkanTutorial).
 
+## Build requirements
+
+The projects require the [Vulkan SDK](https://www.lunarg.com/vulkan-sdk/) to build/run. The SDK provides the Vulkan validation layers as well as the command line tools to compile the shaders. The projects include a targets file that compiles the shaders.
+
 ## Asset Licenses
 
 This repository includes the same assets as the original tutorial assets. They are located in the `Assets/` folder.
