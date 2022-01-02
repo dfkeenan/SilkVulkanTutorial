@@ -123,6 +123,7 @@ unsafe class HelloTriangleApplication
     private SurfaceKHR surface;
 
     private PhysicalDevice physicalDevice;
+    private SampleCountFlags msaaSamples = SampleCountFlags.SampleCount1Bit;
     private Device device;
 
     private Queue graphicsQueue;
@@ -142,6 +143,10 @@ unsafe class HelloTriangleApplication
     private Pipeline graphicsPipeline;
 
     private CommandPool commandPool;
+
+    private Image colorImage;
+    private DeviceMemory colorImageMemory;
+    private ImageView colorImageView;
 
     private Image depthImage;
     private DeviceMemory depthImageMemory;
@@ -224,6 +229,7 @@ unsafe class HelloTriangleApplication
         CreateDescriptorSetLayout();
         CreateGraphicsPipeline();
         CreateCommandPool();
+        CreateColorResources();
         CreateDepthResources();
         CreateFramebuffers();
         CreateTextureImage();
@@ -251,6 +257,10 @@ unsafe class HelloTriangleApplication
         vk!.DestroyImageView(device, depthImageView, null);
         vk!.DestroyImage(device, depthImage, null);
         vk!.FreeMemory(device, depthImageMemory, null);
+
+        vk!.DestroyImageView(device, colorImageView, null);
+        vk!.DestroyImage(device, colorImage, null);
+        vk!.FreeMemory(device, colorImageMemory, null);
 
         foreach (var framebuffer in swapChainFramebuffers!)
         {
@@ -342,6 +352,7 @@ unsafe class HelloTriangleApplication
         CreateImageViews();
         CreateRenderPass();
         CreateGraphicsPipeline();
+        CreateColorResources();
         CreateDepthResources();
         CreateFramebuffers();
         CreateUniformBuffers();
@@ -470,6 +481,7 @@ unsafe class HelloTriangleApplication
             if (IsDeviceSuitable(device))
             {
                 physicalDevice = device;
+                msaaSamples = GetMaxUsableSampleCount();
                 break;
             }
         }
@@ -640,24 +652,36 @@ unsafe class HelloTriangleApplication
         AttachmentDescription colorAttachment = new()
         {
             Format = swapChainImageFormat,
-            Samples = SampleCountFlags.SampleCount1Bit,
+            Samples = msaaSamples,
             LoadOp = AttachmentLoadOp.Clear,
             StoreOp = AttachmentStoreOp.Store,
             StencilLoadOp = AttachmentLoadOp.DontCare,
             InitialLayout = ImageLayout.Undefined,
-            FinalLayout = ImageLayout.PresentSrcKhr,
+            FinalLayout = ImageLayout.ColorAttachmentOptimal,
         };
 
         AttachmentDescription depthAttachment = new()
         {
             Format = FindDepthFormat(),
-            Samples = SampleCountFlags.SampleCount1Bit,
+            Samples = msaaSamples,
             LoadOp = AttachmentLoadOp.Clear,
             StoreOp = AttachmentStoreOp.DontCare,
             StencilLoadOp = AttachmentLoadOp.DontCare,
             StencilStoreOp = AttachmentStoreOp.DontCare,
             InitialLayout = ImageLayout.Undefined,
             FinalLayout= ImageLayout.DepthStencilAttachmentOptimal,
+        };
+
+        AttachmentDescription colorAttachmentResolve = new()
+        {
+            Format = swapChainImageFormat,
+            Samples = SampleCountFlags.SampleCount1Bit,
+            LoadOp = AttachmentLoadOp.DontCare,
+            StoreOp = AttachmentStoreOp.Store,
+            StencilLoadOp = AttachmentLoadOp.DontCare,
+            StencilStoreOp= AttachmentStoreOp.DontCare,
+            InitialLayout = ImageLayout.Undefined,
+            FinalLayout = ImageLayout.PresentSrcKhr,
         };
 
         AttachmentReference colorAttachmentRef = new()
@@ -672,12 +696,19 @@ unsafe class HelloTriangleApplication
             Layout = ImageLayout.DepthStencilAttachmentOptimal,
         };
 
+        AttachmentReference colorAttachmentResolveRef = new()
+        {
+            Attachment = 2,
+            Layout = ImageLayout.ColorAttachmentOptimal,
+        };
+
         SubpassDescription subpass = new()
         {
             PipelineBindPoint = PipelineBindPoint.Graphics,
             ColorAttachmentCount = 1,
             PColorAttachments = &colorAttachmentRef,
             PDepthStencilAttachment = &depthAttachmentRef,
+            PResolveAttachments = &colorAttachmentResolveRef,
         };
 
         SubpassDependency dependency = new()
@@ -690,7 +721,7 @@ unsafe class HelloTriangleApplication
             DstAccessMask = AccessFlags.AccessColorAttachmentWriteBit | AccessFlags.AccessDepthStencilAttachmentWriteBit
         };
 
-        var attachments = new[] { colorAttachment, depthAttachment };
+        var attachments = new[] { colorAttachment, depthAttachment, colorAttachmentResolve };
 
         fixed (AttachmentDescription* attachmentsPtr = attachments)
         {
@@ -845,7 +876,7 @@ unsafe class HelloTriangleApplication
             {
                 SType = StructureType.PipelineMultisampleStateCreateInfo,
                 SampleShadingEnable = false,
-                RasterizationSamples = SampleCountFlags.SampleCount1Bit,
+                RasterizationSamples = msaaSamples,
             };
 
             PipelineDepthStencilStateCreateInfo depthStencil = new()
@@ -928,7 +959,7 @@ unsafe class HelloTriangleApplication
 
         for(int i = 0; i < swapChainImageViews.Length; i++)
         {
-            var attachments = new[] { swapChainImageViews[i], depthImageView };
+            var attachments = new[] { colorImageView, depthImageView, swapChainImageViews[i] };
 
             fixed(ImageView* attachmentsPtr = attachments)
             {
@@ -967,11 +998,19 @@ unsafe class HelloTriangleApplication
         }
     }
 
+    private void CreateColorResources()
+    {
+        Format colorFormat = swapChainImageFormat;
+
+        CreateImage(swapChainExtent.Width, swapChainExtent.Height, 1, msaaSamples, colorFormat, ImageTiling.Optimal, ImageUsageFlags.ImageUsageTransientAttachmentBit | ImageUsageFlags.ImageUsageColorAttachmentBit, MemoryPropertyFlags.MemoryPropertyDeviceLocalBit, ref colorImage, ref colorImageMemory);
+        colorImageView = CreateImageView(colorImage, colorFormat, ImageAspectFlags.ImageAspectColorBit, 1);
+    }
+
     private void CreateDepthResources()
     {
         Format depthFormat = FindDepthFormat();
 
-        CreateImage(swapChainExtent.Width, swapChainExtent.Height, 1, depthFormat, ImageTiling.Optimal, ImageUsageFlags.ImageUsageDepthStencilAttachmentBit, MemoryPropertyFlags.MemoryPropertyDeviceLocalBit, ref depthImage, ref depthImageMemory);
+        CreateImage(swapChainExtent.Width, swapChainExtent.Height, 1, msaaSamples, depthFormat, ImageTiling.Optimal, ImageUsageFlags.ImageUsageDepthStencilAttachmentBit, MemoryPropertyFlags.MemoryPropertyDeviceLocalBit, ref depthImage, ref depthImageMemory);
         depthImageView = CreateImageView(depthImage, depthFormat, ImageAspectFlags.ImageAspectDepthBit, 1);
     }
 
@@ -1020,7 +1059,7 @@ unsafe class HelloTriangleApplication
         pixels.CopyTo(new Span<SixLabors.ImageSharp.PixelFormats.Rgba32>(data, pixels.Length));
         vk!.UnmapMemory(device, stagingBufferMemory);
 
-        CreateImage((uint)img.Width, (uint)img.Height, mipLevels, Format.R8G8B8A8Srgb, ImageTiling.Optimal, ImageUsageFlags.ImageUsageTransferDstBit | ImageUsageFlags.ImageUsageSampledBit, MemoryPropertyFlags.MemoryPropertyDeviceLocalBit, ref textureImage, ref textureImageMemory);
+        CreateImage((uint)img.Width, (uint)img.Height, mipLevels, SampleCountFlags.SampleCount1Bit, Format.R8G8B8A8Srgb, ImageTiling.Optimal, ImageUsageFlags.ImageUsageTransferDstBit | ImageUsageFlags.ImageUsageSampledBit, MemoryPropertyFlags.MemoryPropertyDeviceLocalBit, ref textureImage, ref textureImageMemory);
 
         TransitionImageLayout(textureImage, Format.R8G8B8A8Srgb, ImageLayout.Undefined, ImageLayout.TransferDstOptimal, mipLevels);
         CopyBufferToImage(stagingBuffer, textureImage, (uint)img.Width, (uint)img.Height);
@@ -1137,6 +1176,24 @@ unsafe class HelloTriangleApplication
         EndSingleTimeCommands(commandBuffer);
     }
 
+    private SampleCountFlags GetMaxUsableSampleCount()
+    {
+        vk!.GetPhysicalDeviceProperties(physicalDevice, out var physicalDeviceProperties);
+
+        var counts = physicalDeviceProperties.Limits.FramebufferColorSampleCounts & physicalDeviceProperties.Limits.FramebufferDepthSampleCounts;
+
+        return counts switch
+        {
+            var c when (c & SampleCountFlags.SampleCount64Bit) != 0 => SampleCountFlags.SampleCount64Bit,
+            var c when (c & SampleCountFlags.SampleCount32Bit) != 0 => SampleCountFlags.SampleCount32Bit,
+            var c when (c & SampleCountFlags.SampleCount16Bit) != 0 => SampleCountFlags.SampleCount16Bit,
+            var c when (c & SampleCountFlags.SampleCount8Bit) != 0 => SampleCountFlags.SampleCount8Bit,
+            var c when (c & SampleCountFlags.SampleCount4Bit) != 0 => SampleCountFlags.SampleCount4Bit,
+            var c when (c & SampleCountFlags.SampleCount2Bit) != 0 => SampleCountFlags.SampleCount2Bit,
+            _ => SampleCountFlags.SampleCount1Bit
+        };
+    }
+
     private void CreateTextureImageView()
     {
         textureImageView = CreateImageView(textureImage, Format.R8G8B8A8Srgb, ImageAspectFlags.ImageAspectColorBit, mipLevels);
@@ -1212,7 +1269,7 @@ unsafe class HelloTriangleApplication
         return imageView;
     }
 
-    private void CreateImage(uint width, uint height, uint mipLevels, Format format, ImageTiling tiling, ImageUsageFlags usage, MemoryPropertyFlags properties, ref Image image, ref DeviceMemory imageMemory)
+    private void CreateImage(uint width, uint height, uint mipLevels, SampleCountFlags numSamples, Format format, ImageTiling tiling, ImageUsageFlags usage, MemoryPropertyFlags properties, ref Image image, ref DeviceMemory imageMemory)
     {
         ImageCreateInfo imageInfo = new()
         {
@@ -1230,7 +1287,7 @@ unsafe class HelloTriangleApplication
             Tiling = tiling,
             InitialLayout = ImageLayout.Undefined,
             Usage = usage,
-            Samples = SampleCountFlags.SampleCount1Bit,
+            Samples = numSamples,
             SharingMode = SharingMode.Exclusive,
         };
 
