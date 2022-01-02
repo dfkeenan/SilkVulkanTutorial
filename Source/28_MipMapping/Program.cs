@@ -147,6 +147,7 @@ unsafe class HelloTriangleApplication
     private DeviceMemory depthImageMemory;
     private ImageView depthImageView;
 
+    private uint mipLevels;
     private Image textureImage;
     private DeviceMemory textureImageMemory;
     private ImageView textureImageView;
@@ -630,7 +631,7 @@ unsafe class HelloTriangleApplication
         for (int i = 0; i < swapChainImages.Length; i++)
         {
 
-            swapChainImageViews[i] = CreateImageView(swapChainImages[i], swapChainImageFormat, ImageAspectFlags.ImageAspectColorBit);
+            swapChainImageViews[i] = CreateImageView(swapChainImages[i], swapChainImageFormat, ImageAspectFlags.ImageAspectColorBit, 1);
         }
     }
 
@@ -970,8 +971,8 @@ unsafe class HelloTriangleApplication
     {
         Format depthFormat = FindDepthFormat();
 
-        CreateImage(swapChainExtent.Width, swapChainExtent.Height, depthFormat, ImageTiling.Optimal, ImageUsageFlags.ImageUsageDepthStencilAttachmentBit, MemoryPropertyFlags.MemoryPropertyDeviceLocalBit, ref depthImage, ref depthImageMemory);
-        depthImageView = CreateImageView(depthImage, depthFormat, ImageAspectFlags.ImageAspectDepthBit);
+        CreateImage(swapChainExtent.Width, swapChainExtent.Height, 1, depthFormat, ImageTiling.Optimal, ImageUsageFlags.ImageUsageDepthStencilAttachmentBit, MemoryPropertyFlags.MemoryPropertyDeviceLocalBit, ref depthImage, ref depthImageMemory);
+        depthImageView = CreateImageView(depthImage, depthFormat, ImageAspectFlags.ImageAspectDepthBit, 1);
     }
 
     private Format FindSupportedFormat(IEnumerable<Format> candidates, ImageTiling tiling, FormatFeatureFlags features)
@@ -1008,6 +1009,7 @@ unsafe class HelloTriangleApplication
         }
 
         ulong imageSize = (ulong)(pixels.Length * Unsafe.SizeOf<SixLabors.ImageSharp.PixelFormats.Rgba32>());
+        mipLevels = (uint)(Math.Floor(Math.Log2(Math.Max(img.Width, img.Height))) + 1);
 
         Buffer stagingBuffer = default;
         DeviceMemory stagingBufferMemory = default;
@@ -1018,19 +1020,126 @@ unsafe class HelloTriangleApplication
         pixels.CopyTo(new Span<SixLabors.ImageSharp.PixelFormats.Rgba32>(data, pixels.Length));
         vk!.UnmapMemory(device, stagingBufferMemory);
 
-        CreateImage((uint)img.Width, (uint)img.Height, Format.R8G8B8A8Srgb, ImageTiling.Optimal, ImageUsageFlags.ImageUsageTransferDstBit | ImageUsageFlags.ImageUsageSampledBit, MemoryPropertyFlags.MemoryPropertyDeviceLocalBit, ref textureImage, ref textureImageMemory);
+        CreateImage((uint)img.Width, (uint)img.Height, mipLevels, Format.R8G8B8A8Srgb, ImageTiling.Optimal, ImageUsageFlags.ImageUsageTransferDstBit | ImageUsageFlags.ImageUsageSampledBit, MemoryPropertyFlags.MemoryPropertyDeviceLocalBit, ref textureImage, ref textureImageMemory);
 
-        TransitionImageLayout(textureImage, Format.R8G8B8A8Srgb, ImageLayout.Undefined, ImageLayout.TransferDstOptimal);
+        TransitionImageLayout(textureImage, Format.R8G8B8A8Srgb, ImageLayout.Undefined, ImageLayout.TransferDstOptimal, mipLevels);
         CopyBufferToImage(stagingBuffer, textureImage, (uint)img.Width, (uint)img.Height);
-        TransitionImageLayout(textureImage, Format.R8G8B8A8Srgb, ImageLayout.TransferDstOptimal, ImageLayout.ShaderReadOnlyOptimal);
+        //Transitioned to VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL while generating mipmaps
 
         vk!.DestroyBuffer(device, stagingBuffer, null);
         vk!.FreeMemory(device, stagingBufferMemory, null);
+
+        GenerateMipMaps(textureImage, Format.R8G8B8A8Srgb, (uint)img.Width, (uint)img.Height, mipLevels);
+    }
+
+    private void GenerateMipMaps(Image image, Format imageFormat, uint width, uint height, uint mipLevels)
+    {
+        vk!.GetPhysicalDeviceFormatProperties(physicalDevice, imageFormat, out var formatProperties);
+
+        if((formatProperties.OptimalTilingFeatures & FormatFeatureFlags.FormatFeatureSampledImageFilterLinearBit) == 0)
+        {
+            throw new Exception("texture image format does not support linear blitting!");
+        }
+
+        var commandBuffer = BeginSingleTimeCommands();
+
+        ImageMemoryBarrier barrier = new()
+        {
+            SType = StructureType.ImageMemoryBarrier,
+            Image = image,
+            SrcQueueFamilyIndex = Vk.QueueFamilyIgnored,
+            DstQueueFamilyIndex = Vk.QueueFamilyIgnored,
+            SubresourceRange =
+            {
+                AspectMask = ImageAspectFlags.ImageAspectColorBit,
+                BaseArrayLayer = 0,
+                LayerCount = 1,
+                LevelCount = 1,
+            }
+        };
+
+        var mipWidth = width;
+        var mipHeight = height;
+
+        for (uint i = 1; i < mipLevels; i++)
+        {
+            barrier.SubresourceRange.BaseMipLevel = i - 1;
+            barrier.OldLayout = ImageLayout.TransferDstOptimal;
+            barrier.NewLayout = ImageLayout.TransferSrcOptimal;
+            barrier.SrcAccessMask = AccessFlags.AccessTransferWriteBit;
+            barrier.DstAccessMask = AccessFlags.AccessTransferReadBit;
+
+            vk!.CmdPipelineBarrier(commandBuffer, PipelineStageFlags.PipelineStageTransferBit, PipelineStageFlags.PipelineStageTransferBit, 0,
+                0, null,
+                0, null,
+                1, barrier);
+
+            ImageBlit blit = new()
+            {
+                SrcOffsets =
+                {
+                    Element0 = new Offset3D(0,0,0),
+                    Element1 = new Offset3D((int)mipWidth, (int)mipHeight, 1),
+                },
+                SrcSubresource =
+                {
+                    AspectMask = ImageAspectFlags.ImageAspectColorBit,
+                    MipLevel = i - 1,
+                    BaseArrayLayer = 0,
+                    LayerCount = 1,                    
+                },
+                DstOffsets =
+                {
+                    Element0 = new Offset3D(0,0,0),
+                    Element1 = new Offset3D((int)(mipWidth > 1 ? mipWidth / 2 : 1), (int)(mipHeight > 1 ? mipHeight / 2 : 1),1),
+                },
+                DstSubresource =
+                {
+                    AspectMask = ImageAspectFlags.ImageAspectColorBit,
+                    MipLevel = i,
+                    BaseArrayLayer = 0,
+                    LayerCount = 1,
+                },
+
+            };
+
+            vk!.CmdBlitImage(commandBuffer,
+                image, ImageLayout.TransferSrcOptimal,
+                image, ImageLayout.TransferDstOptimal,
+                1, blit,
+                Filter.Linear);
+
+            barrier.OldLayout = ImageLayout.TransferSrcOptimal;
+            barrier.NewLayout = ImageLayout.ShaderReadOnlyOptimal;
+            barrier.SrcAccessMask = AccessFlags.AccessTransferReadBit;
+            barrier.DstAccessMask = AccessFlags.AccessShaderReadBit;
+
+            vk!.CmdPipelineBarrier(commandBuffer, PipelineStageFlags.PipelineStageTransferBit, PipelineStageFlags.PipelineStageFragmentShaderBit, 0,
+                0, null,
+                0, null,
+                1, barrier);
+
+            if (mipWidth > 1) mipWidth /= 2;
+            if (mipHeight > 1) mipHeight /= 2;
+        }
+
+        barrier.SubresourceRange.BaseMipLevel = mipLevels - 1;
+        barrier.OldLayout = ImageLayout.TransferDstOptimal;
+        barrier.NewLayout = ImageLayout.ShaderReadOnlyOptimal;
+        barrier.SrcAccessMask = AccessFlags.AccessTransferWriteBit;
+        barrier.DstAccessMask = AccessFlags.AccessShaderReadBit;
+
+        vk!.CmdPipelineBarrier(commandBuffer, PipelineStageFlags.PipelineStageTransferBit, PipelineStageFlags.PipelineStageFragmentShaderBit, 0,
+            0, null,
+            0, null,
+            1, barrier);
+
+        EndSingleTimeCommands(commandBuffer);
     }
 
     private void CreateTextureImageView()
     {
-        textureImageView = CreateImageView(textureImage, Format.R8G8B8A8Srgb, ImageAspectFlags.ImageAspectColorBit);
+        textureImageView = CreateImageView(textureImage, Format.R8G8B8A8Srgb, ImageAspectFlags.ImageAspectColorBit, mipLevels);
     }
 
     private void CreateTextureSampler()
@@ -1053,6 +1162,9 @@ unsafe class HelloTriangleApplication
             CompareEnable = false,
             CompareOp = CompareOp.Always,
             MipmapMode = SamplerMipmapMode.Linear,
+            MinLod = 0,
+            MaxLod = mipLevels,
+            MipLodBias = 0,
         };
 
         fixed(Sampler* textureSamplerPtr = &textureSampler)
@@ -1064,7 +1176,7 @@ unsafe class HelloTriangleApplication
         }
     }
 
-    private ImageView CreateImageView(Image image, Format format, ImageAspectFlags aspectFlags)
+    private ImageView CreateImageView(Image image, Format format, ImageAspectFlags aspectFlags, uint mipLevels)
     {
         ImageViewCreateInfo createInfo = new()
         {
@@ -1083,7 +1195,7 @@ unsafe class HelloTriangleApplication
                 {
                     AspectMask = aspectFlags,
                     BaseMipLevel = 0,
-                    LevelCount = 1,
+                    LevelCount = mipLevels,
                     BaseArrayLayer = 0,
                     LayerCount = 1,
                 }
@@ -1100,7 +1212,7 @@ unsafe class HelloTriangleApplication
         return imageView;
     }
 
-    private void CreateImage(uint width, uint height, Format format, ImageTiling tiling, ImageUsageFlags usage, MemoryPropertyFlags properties, ref Image image, ref DeviceMemory imageMemory)
+    private void CreateImage(uint width, uint height, uint mipLevels, Format format, ImageTiling tiling, ImageUsageFlags usage, MemoryPropertyFlags properties, ref Image image, ref DeviceMemory imageMemory)
     {
         ImageCreateInfo imageInfo = new()
         {
@@ -1112,7 +1224,7 @@ unsafe class HelloTriangleApplication
                 Height = height,
                 Depth = 1,
             },
-            MipLevels = 1,
+            MipLevels = mipLevels,
             ArrayLayers = 1,
             Format = format,
             Tiling = tiling,
@@ -1151,7 +1263,7 @@ unsafe class HelloTriangleApplication
         vk!.BindImageMemory(device, image, imageMemory, 0);
     }
 
-    private void TransitionImageLayout(Image image, Format format, ImageLayout oldLayout, ImageLayout newLayout)
+    private void TransitionImageLayout(Image image, Format format, ImageLayout oldLayout, ImageLayout newLayout, uint mipLevels)
     {
         CommandBuffer commandBuffer = BeginSingleTimeCommands();
 
@@ -1167,7 +1279,7 @@ unsafe class HelloTriangleApplication
             {
                 AspectMask = ImageAspectFlags.ImageAspectColorBit,
                 BaseMipLevel = 0,
-                LevelCount = 1,
+                LevelCount = mipLevels,
                 BaseArrayLayer = 0,
                 LayerCount = 1,
             }
