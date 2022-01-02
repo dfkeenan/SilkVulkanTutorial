@@ -1,0 +1,32 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+	<PropertyGroup>
+		<OutputType>WinExe</OutputType>
+		<TargetFramework>net6.0</TargetFramework>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<Nullable>enable</Nullable>
+		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<PackageReference Include="Silk.NET" Version="2.11.0" />
+		<PackageReference Include="Silk.NET.Assimp" Version="2.11.0" />
+		<PackageReference Include="Silk.NET.Vulkan.Extensions.EXT" Version="2.11.0" />
+		<PackageReference Include="SixLabors.ImageSharp" Version="1.0.4" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<VertexShader Include="../26_DepthBuffering/**/*.vert" />
+		<FragmentShader Include="../26_DepthBuffering/**/*.frag" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<Content Include="..\..\Assets\viking_room.png" Link="Assets\viking_room.png">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</Content>
+	  <Content Include="..\..\Assets\viking_room.obj" Link="Assets\viking_room.obj">
+	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	  </Content>
+	</ItemGroup>
+
+</Project>
