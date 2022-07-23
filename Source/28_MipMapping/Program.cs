@@ -1002,14 +1002,9 @@ unsafe class HelloTriangleApplication
 
     private void CreateTextureImage()
     {
-        using var img = (SixLabors.ImageSharp.Image<SixLabors.ImageSharp.PixelFormats.Rgba32>) SixLabors.ImageSharp.Image.Load(TEXTURE_PATH);
-        
-        if(!img.TryGetSinglePixelSpan(out var pixels))
-        {
-            throw new Exception("failed to load texture image!");
-        }
+        using var img = SixLabors.ImageSharp.Image.Load<SixLabors.ImageSharp.PixelFormats.Rgba32>(TEXTURE_PATH);
 
-        ulong imageSize = (ulong)(pixels.Length * Unsafe.SizeOf<SixLabors.ImageSharp.PixelFormats.Rgba32>());
+        ulong imageSize = (ulong)(img.Width * img.Height * img.PixelType.BitsPerPixel / 8);
         mipLevels = (uint)(Math.Floor(Math.Log2(Math.Max(img.Width, img.Height))) + 1);
 
         Buffer stagingBuffer = default;
@@ -1018,7 +1013,7 @@ unsafe class HelloTriangleApplication
 
         void* data;
         vk!.MapMemory(device, stagingBufferMemory, 0, imageSize, 0, &data);
-        pixels.CopyTo(new Span<SixLabors.ImageSharp.PixelFormats.Rgba32>(data, pixels.Length));
+        img.CopyPixelDataTo(new Span<byte>(data, (int)imageSize));
         vk!.UnmapMemory(device, stagingBufferMemory);
 
         CreateImage((uint)img.Width, (uint)img.Height, mipLevels, Format.R8G8B8A8Srgb, ImageTiling.Optimal, ImageUsageFlags.ImageUsageTransferSrcBit | ImageUsageFlags.ImageUsageTransferDstBit | ImageUsageFlags.ImageUsageSampledBit, MemoryPropertyFlags.MemoryPropertyDeviceLocalBit, ref textureImage, ref textureImageMemory);
