@@ -1,9 +1,7 @@
-﻿using System.Drawing;
-using System.Runtime.CompilerServices;
+﻿using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using Silk.NET.Core;
 using Silk.NET.Core.Native;
-using Silk.NET.Input;
 using Silk.NET.Maths;
 using Silk.NET.Vulkan;
 using Silk.NET.Vulkan.Extensions.EXT;
@@ -39,7 +37,7 @@ unsafe class HelloTriangleApplication
 
     bool EnableValidationLayers = true;
 
-    private readonly string[] validationLayers = new []
+    private readonly string[] validationLayers = new[]
     {
         "VK_LAYER_KHRONOS_validation"
     };
@@ -171,17 +169,17 @@ unsafe class HelloTriangleApplication
         var extensions = GetRequiredExtensions();
         createInfo.EnabledExtensionCount = (uint)extensions.Length;
         createInfo.PpEnabledExtensionNames = (byte**)SilkMarshal.StringArrayToPtr(extensions); ;
-        
+
         if (EnableValidationLayers)
         {
             createInfo.EnabledLayerCount = (uint)validationLayers.Length;
             createInfo.PpEnabledLayerNames = (byte**)SilkMarshal.StringArrayToPtr(validationLayers);
 
-            DebugUtilsMessengerCreateInfoEXT debugCreateInfo = new ();
+            DebugUtilsMessengerCreateInfoEXT debugCreateInfo = new();
             PopulateDebugMessengerCreateInfo(ref debugCreateInfo);
             createInfo.PNext = &debugCreateInfo;
         }
-        else 
+        else
         {
             createInfo.EnabledLayerCount = 0;
             createInfo.PNext = null;
@@ -343,7 +341,7 @@ unsafe class HelloTriangleApplication
         var extent = ChooseSwapExtent(swapChainSupport.Capabilities);
 
         var imageCount = swapChainSupport.Capabilities.MinImageCount + 1;
-        if(swapChainSupport.Capabilities.MaxImageCount > 0 && imageCount > swapChainSupport.Capabilities.MaxImageCount)
+        if (swapChainSupport.Capabilities.MaxImageCount > 0 && imageCount > swapChainSupport.Capabilities.MaxImageCount)
         {
             imageCount = swapChainSupport.Capabilities.MaxImageCount;
         }
@@ -393,7 +391,7 @@ unsafe class HelloTriangleApplication
             throw new NotSupportedException("VK_KHR_swapchain extension not found.");
         }
 
-        if(khrSwapChain!.CreateSwapchain(device, creatInfo, null, out swapChain) != Result.Success)
+        if (khrSwapChain!.CreateSwapchain(device, creatInfo, null, out swapChain) != Result.Success)
         {
             throw new Exception("failed to create swap chain!");
         }
@@ -439,7 +437,7 @@ unsafe class HelloTriangleApplication
 
             };
 
-            if(vk!.CreateImageView(device, createInfo, null, out swapChainImageViews[i]) != Result.Success)
+            if (vk!.CreateImageView(device, createInfo, null, out swapChainImageViews[i]) != Result.Success)
             {
                 throw new Exception("failed to create image views!");
             }
@@ -470,7 +468,7 @@ unsafe class HelloTriangleApplication
             PName = (byte*)SilkMarshal.StringToPtr("main")
         };
 
-        var shaderStages = stackalloc []
+        var shaderStages = stackalloc[]
         {
             vertShaderStageInfo,
             fragShaderStageInfo
@@ -561,7 +559,7 @@ unsafe class HelloTriangleApplication
             PushConstantRangeCount = 0,
         };
 
-        if(vk!.CreatePipelineLayout(device, pipelineLayoutInfo, null, out pipelineLayout) != Result.Success)
+        if (vk!.CreatePipelineLayout(device, pipelineLayoutInfo, null, out pipelineLayout) != Result.Success)
         {
             throw new Exception("failed to create pipeline layout!");
         }
@@ -602,7 +600,7 @@ unsafe class HelloTriangleApplication
     {
         foreach (var availableFormat in availableFormats)
         {
-            if(availableFormat.Format == Format.B8G8R8A8Srgb && availableFormat.ColorSpace == ColorSpaceKHR.SpaceSrgbNonlinearKhr)
+            if (availableFormat.Format == Format.B8G8R8A8Srgb && availableFormat.ColorSpace == ColorSpaceKHR.SpaceSrgbNonlinearKhr)
             {
                 return availableFormat;
             }
@@ -615,7 +613,7 @@ unsafe class HelloTriangleApplication
     {
         foreach (var availablePresentMode in availablePresentModes)
         {
-            if(availablePresentMode == PresentModeKHR.MailboxKhr)
+            if (availablePresentMode == PresentModeKHR.MailboxKhr)
             {
                 return availablePresentMode;
             }
@@ -634,7 +632,8 @@ unsafe class HelloTriangleApplication
         {
             var framebufferSize = window!.FramebufferSize;
 
-            Extent2D actualExtent = new () {
+            Extent2D actualExtent = new()
+            {
                 Width = (uint)framebufferSize.X,
                 Height = (uint)framebufferSize.Y
             };
@@ -698,7 +697,7 @@ unsafe class HelloTriangleApplication
         if (extensionsSupported)
         {
             var swapChainSupport = QuerySwapChainSupport(device);
-            swapChainAdequate =  swapChainSupport.Formats.Any() && swapChainSupport.PresentModes.Any();
+            swapChainAdequate = swapChainSupport.Formats.Any() && swapChainSupport.PresentModes.Any();
         }
 
         return indices.IsComplete() && extensionsSupported && swapChainAdequate;

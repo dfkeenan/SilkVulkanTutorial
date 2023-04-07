@@ -1,8 +1,6 @@
-﻿using System.Drawing;
-using System.Runtime.InteropServices;
+﻿using System.Runtime.InteropServices;
 using Silk.NET.Core;
 using Silk.NET.Core.Native;
-using Silk.NET.Input;
 using Silk.NET.Maths;
 using Silk.NET.Vulkan;
 using Silk.NET.Vulkan.Extensions.EXT;
@@ -28,7 +26,7 @@ unsafe class HelloTriangleApplication
 
     bool EnableValidationLayers = true;
 
-    private readonly string[] validationLayers = new []
+    private readonly string[] validationLayers = new[]
     {
         "VK_LAYER_KHRONOS_validation"
     };
@@ -123,17 +121,17 @@ unsafe class HelloTriangleApplication
         var extensions = GetRequiredExtensions();
         createInfo.EnabledExtensionCount = (uint)extensions.Length;
         createInfo.PpEnabledExtensionNames = (byte**)SilkMarshal.StringArrayToPtr(extensions); ;
-        
+
         if (EnableValidationLayers)
         {
             createInfo.EnabledLayerCount = (uint)validationLayers.Length;
             createInfo.PpEnabledLayerNames = (byte**)SilkMarshal.StringArrayToPtr(validationLayers);
 
-            DebugUtilsMessengerCreateInfoEXT debugCreateInfo = new ();
+            DebugUtilsMessengerCreateInfoEXT debugCreateInfo = new();
             PopulateDebugMessengerCreateInfo(ref debugCreateInfo);
             createInfo.PNext = &debugCreateInfo;
         }
-        else 
+        else
         {
             createInfo.EnabledLayerCount = 0;
             createInfo.PNext = null;

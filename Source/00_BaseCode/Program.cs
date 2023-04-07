@@ -1,6 +1,4 @@
-﻿using System.Drawing;
-using Silk.NET.Input;
-using Silk.NET.Maths;
+﻿using Silk.NET.Maths;
 using Silk.NET.Windowing;
 
 
@@ -42,7 +40,7 @@ unsafe class HelloTriangleApplication
 
     private void InitVulkan()
     {
-        
+
     }
 
     private void MainLoop()
