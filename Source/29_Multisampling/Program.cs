@@ -510,11 +510,9 @@ unsafe class HelloTriangleApplication
             {
                 SType = StructureType.DeviceQueueCreateInfo,
                 QueueFamilyIndex = uniqueQueueFamilies[i],
-                QueueCount = 1
+                QueueCount = 1,
+                PQueuePriorities = &queuePriority
             };
-
-
-            queueCreateInfos[i].PQueuePriorities = &queuePriority;
         }
 
         PhysicalDeviceFeatures deviceFeatures = new()
@@ -1198,8 +1196,7 @@ unsafe class HelloTriangleApplication
 
     private void CreateTextureSampler()
     {
-        PhysicalDeviceProperties properties;
-        vk!.GetPhysicalDeviceProperties(physicalDevice, out properties);
+        vk!.GetPhysicalDeviceProperties(physicalDevice, out PhysicalDeviceProperties properties);
 
         SamplerCreateInfo samplerInfo = new()
         {
@@ -1256,9 +1253,8 @@ unsafe class HelloTriangleApplication
 
         };
 
-        ImageView imageView = default;
 
-        if (vk!.CreateImageView(device, createInfo, null, out imageView) != Result.Success)
+        if (vk!.CreateImageView(device, createInfo, null, out ImageView imageView) != Result.Success)
         {
             throw new Exception("failed to create image views!");
         }
@@ -1296,8 +1292,7 @@ unsafe class HelloTriangleApplication
             }
         }
 
-        MemoryRequirements memRequirements;
-        vk!.GetImageMemoryRequirements(device, image, out memRequirements);
+        vk!.GetImageMemoryRequirements(device, image, out MemoryRequirements memRequirements);
 
         MemoryAllocateInfo allocInfo = new()
         {
@@ -1428,7 +1423,7 @@ unsafe class HelloTriangleApplication
                         var position = mesh->MVertices[index];
                         var texture = mesh->MTextureCoords[0][(int)index];
 
-                        Vertex vertex = new Vertex
+                        Vertex vertex = new()
                         {
                             pos = new Vector3D<float>(position.X, position.Y, position.Z),
                             color = new Vector3D<float>(1, 1, 1),
@@ -1674,8 +1669,7 @@ unsafe class HelloTriangleApplication
             CommandBufferCount = 1,
         };
 
-        CommandBuffer commandBuffer = default;
-        vk!.AllocateCommandBuffers(device, allocateInfo, out commandBuffer);
+        vk!.AllocateCommandBuffers(device, allocateInfo, out CommandBuffer commandBuffer);
 
         CommandBufferBeginInfo beginInfo = new()
         {
@@ -1721,8 +1715,7 @@ unsafe class HelloTriangleApplication
 
     private uint FindMemoryType(uint typeFilter, MemoryPropertyFlags properties)
     {
-        PhysicalDeviceMemoryProperties memProperties;
-        vk!.GetPhysicalDeviceMemoryProperties(physicalDevice, out memProperties);
+        vk!.GetPhysicalDeviceMemoryProperties(physicalDevice, out PhysicalDeviceMemoryProperties memProperties);
 
         for (int i = 0; i < memProperties.MemoryTypeCount; i++)
         {
@@ -2094,8 +2087,7 @@ unsafe class HelloTriangleApplication
             swapChainAdequate =  swapChainSupport.Formats.Any() && swapChainSupport.PresentModes.Any();
         }
 
-        PhysicalDeviceFeatures supportedFeatures;
-        vk!.GetPhysicalDeviceFeatures(device, out supportedFeatures);
+        vk!.GetPhysicalDeviceFeatures(device, out PhysicalDeviceFeatures supportedFeatures);
 
         return indices.IsComplete() && extensionsSupported && swapChainAdequate && supportedFeatures.SamplerAnisotropy;
     }

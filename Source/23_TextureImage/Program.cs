@@ -476,11 +476,9 @@ unsafe class HelloTriangleApplication
             {
                 SType = StructureType.DeviceQueueCreateInfo,
                 QueueFamilyIndex = uniqueQueueFamilies[i],
-                QueueCount = 1
+                QueueCount = 1,
+                PQueuePriorities = &queuePriority
             };
-
-
-            queueCreateInfos[i].PQueuePriorities = &queuePriority;
         }
 
         PhysicalDeviceFeatures deviceFeatures = new();
@@ -974,8 +972,7 @@ unsafe class HelloTriangleApplication
             }
         }
 
-        MemoryRequirements memRequirements;
-        vk!.GetImageMemoryRequirements(device, image, out memRequirements);
+        vk!.GetImageMemoryRequirements(device, image, out MemoryRequirements memRequirements);
 
         MemoryAllocateInfo allocInfo = new()
         {
@@ -1259,8 +1256,7 @@ unsafe class HelloTriangleApplication
             CommandBufferCount = 1,
         };
 
-        CommandBuffer commandBuffer = default;
-        vk!.AllocateCommandBuffers(device, allocateInfo, out commandBuffer);
+        vk!.AllocateCommandBuffers(device, allocateInfo, out CommandBuffer commandBuffer);
 
         CommandBufferBeginInfo beginInfo = new()
         {
@@ -1306,8 +1302,7 @@ unsafe class HelloTriangleApplication
 
     private uint FindMemoryType(uint typeFilter, MemoryPropertyFlags properties)
     {
-        PhysicalDeviceMemoryProperties memProperties;
-        vk!.GetPhysicalDeviceMemoryProperties(physicalDevice, out memProperties);
+        vk!.GetPhysicalDeviceMemoryProperties(physicalDevice, out PhysicalDeviceMemoryProperties memProperties);
 
         for (int i = 0; i < memProperties.MemoryTypeCount; i++)
         {

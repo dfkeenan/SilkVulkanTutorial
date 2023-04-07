@@ -325,11 +325,9 @@ unsafe class HelloTriangleApplication
             {
                 SType = StructureType.DeviceQueueCreateInfo,
                 QueueFamilyIndex = uniqueQueueFamilies[i],
-                QueueCount = 1
+                QueueCount = 1,
+                PQueuePriorities = &queuePriority
             };
-
-
-            queueCreateInfos[i].PQueuePriorities = &queuePriority;
         }
 
         PhysicalDeviceFeatures deviceFeatures = new();
