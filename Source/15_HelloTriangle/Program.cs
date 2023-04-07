@@ -242,12 +242,12 @@ unsafe class HelloTriangleApplication
     private void PopulateDebugMessengerCreateInfo(ref DebugUtilsMessengerCreateInfoEXT createInfo)
     {
         createInfo.SType = StructureType.DebugUtilsMessengerCreateInfoExt;
-        createInfo.MessageSeverity = DebugUtilsMessageSeverityFlagsEXT.DebugUtilsMessageSeverityVerboseBitExt |
-                                     DebugUtilsMessageSeverityFlagsEXT.DebugUtilsMessageSeverityWarningBitExt |
-                                     DebugUtilsMessageSeverityFlagsEXT.DebugUtilsMessageSeverityErrorBitExt;
-        createInfo.MessageType = DebugUtilsMessageTypeFlagsEXT.DebugUtilsMessageTypeGeneralBitExt |
-                                 DebugUtilsMessageTypeFlagsEXT.DebugUtilsMessageTypePerformanceBitExt |
-                                 DebugUtilsMessageTypeFlagsEXT.DebugUtilsMessageTypeValidationBitExt;
+        createInfo.MessageSeverity = DebugUtilsMessageSeverityFlagsEXT.VerboseBitExt |
+                                     DebugUtilsMessageSeverityFlagsEXT.WarningBitExt |
+                                     DebugUtilsMessageSeverityFlagsEXT.ErrorBitExt;
+        createInfo.MessageType = DebugUtilsMessageTypeFlagsEXT.GeneralBitExt |
+                                 DebugUtilsMessageTypeFlagsEXT.PerformanceBitExt |
+                                 DebugUtilsMessageTypeFlagsEXT.ValidationBitExt;
         createInfo.PfnUserCallback = (DebugUtilsMessengerCallbackFunctionEXT)DebugCallback;
     }
 
@@ -397,7 +397,7 @@ unsafe class HelloTriangleApplication
             ImageColorSpace = surfaceFormat.ColorSpace,
             ImageExtent = extent,
             ImageArrayLayers = 1,
-            ImageUsage = ImageUsageFlags.ImageUsageColorAttachmentBit,
+            ImageUsage = ImageUsageFlags.ColorAttachmentBit,
         };
 
         var indices = FindQueueFamilies(physicalDevice);
@@ -420,7 +420,7 @@ unsafe class HelloTriangleApplication
         creatInfo = creatInfo with
         {
             PreTransform = swapChainSupport.Capabilities.CurrentTransform,
-            CompositeAlpha = CompositeAlphaFlagsKHR.CompositeAlphaOpaqueBitKhr,
+            CompositeAlpha = CompositeAlphaFlagsKHR.OpaqueBitKhr,
             PresentMode = presentMode,
             Clipped = true,
 
@@ -458,7 +458,7 @@ unsafe class HelloTriangleApplication
             {
                 SType = StructureType.ImageViewCreateInfo,
                 Image = swapChainImages[i],
-                ViewType = ImageViewType.ImageViewType2D,
+                ViewType = ImageViewType.Type2D,
                 Format = swapChainImageFormat,
                 Components =
                 {
@@ -469,7 +469,7 @@ unsafe class HelloTriangleApplication
                 },
                 SubresourceRange =
                 {
-                    AspectMask = ImageAspectFlags.ImageAspectColorBit,
+                    AspectMask = ImageAspectFlags.ColorBit,
                     BaseMipLevel = 0,
                     LevelCount = 1,
                     BaseArrayLayer = 0,
@@ -490,7 +490,7 @@ unsafe class HelloTriangleApplication
         AttachmentDescription colorAttachment = new()
         {
             Format = swapChainImageFormat,
-            Samples = SampleCountFlags.SampleCount1Bit,
+            Samples = SampleCountFlags.Count1Bit,
             LoadOp = AttachmentLoadOp.Clear,
             StoreOp = AttachmentStoreOp.Store,
             StencilLoadOp = AttachmentLoadOp.DontCare,
@@ -515,10 +515,10 @@ unsafe class HelloTriangleApplication
         {
             SrcSubpass = Vk.SubpassExternal,
             DstSubpass = 0,
-            SrcStageMask = PipelineStageFlags.PipelineStageColorAttachmentOutputBit,
+            SrcStageMask = PipelineStageFlags.ColorAttachmentOutputBit,
             SrcAccessMask = 0,
-            DstStageMask = PipelineStageFlags.PipelineStageColorAttachmentOutputBit,
-            DstAccessMask = AccessFlags.AccessColorAttachmentWriteBit
+            DstStageMask = PipelineStageFlags.ColorAttachmentOutputBit,
+            DstAccessMask = AccessFlags.ColorAttachmentWriteBit
         };
 
         RenderPassCreateInfo renderPassInfo = new() 
@@ -549,7 +549,7 @@ unsafe class HelloTriangleApplication
         PipelineShaderStageCreateInfo vertShaderStageInfo = new()
         {
             SType = StructureType.PipelineShaderStageCreateInfo,
-            Stage = ShaderStageFlags.ShaderStageVertexBit,
+            Stage = ShaderStageFlags.VertexBit,
             Module = vertShaderModule,
             PName = (byte*)SilkMarshal.StringToPtr("main")
         };
@@ -557,7 +557,7 @@ unsafe class HelloTriangleApplication
         PipelineShaderStageCreateInfo fragShaderStageInfo = new()
         {
             SType = StructureType.PipelineShaderStageCreateInfo,
-            Stage = ShaderStageFlags.ShaderStageFragmentBit,
+            Stage = ShaderStageFlags.FragmentBit,
             Module = fragShaderModule,
             PName = (byte*)SilkMarshal.StringToPtr("main")
         };
@@ -614,7 +614,7 @@ unsafe class HelloTriangleApplication
             RasterizerDiscardEnable = false,
             PolygonMode = PolygonMode.Fill,
             LineWidth = 1,
-            CullMode = CullModeFlags.CullModeBackBit,
+            CullMode = CullModeFlags.BackBit,
             FrontFace = FrontFace.Clockwise,
             DepthBiasEnable = false,
         };
@@ -623,12 +623,12 @@ unsafe class HelloTriangleApplication
         {
             SType = StructureType.PipelineMultisampleStateCreateInfo,
             SampleShadingEnable = false,
-            RasterizationSamples = SampleCountFlags.SampleCount1Bit,
+            RasterizationSamples = SampleCountFlags.Count1Bit,
         };
 
         PipelineColorBlendAttachmentState colorBlendAttachment = new()
         {
-            ColorWriteMask = ColorComponentFlags.ColorComponentRBit | ColorComponentFlags.ColorComponentGBit | ColorComponentFlags.ColorComponentBBit | ColorComponentFlags.ColorComponentABit,
+            ColorWriteMask = ColorComponentFlags.RBit | ColorComponentFlags.GBit | ColorComponentFlags.BBit | ColorComponentFlags.ABit,
             BlendEnable = false,
         };
 
@@ -814,7 +814,7 @@ unsafe class HelloTriangleApplication
         FenceCreateInfo fenceInfo = new()
         {
             SType = StructureType.FenceCreateInfo,
-            Flags = FenceCreateFlags.FenceCreateSignaledBit,
+            Flags = FenceCreateFlags.SignaledBit,
         };
 
         for (var i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
@@ -847,7 +847,7 @@ unsafe class HelloTriangleApplication
         };
 
         var waitSemaphores = stackalloc [] {imageAvailableSemaphores[currentFrame]};
-        var waitStages = stackalloc [] { PipelineStageFlags.PipelineStageColorAttachmentOutputBit };
+        var waitStages = stackalloc [] { PipelineStageFlags.ColorAttachmentOutputBit };
 
         var buffer = commandBuffers![imageIndex];
 
@@ -923,7 +923,7 @@ unsafe class HelloTriangleApplication
     {
         foreach (var availableFormat in availableFormats)
         {
-            if(availableFormat.Format == Format.B8G8R8A8Srgb && availableFormat.ColorSpace == ColorSpaceKHR.ColorSpaceSrgbNonlinearKhr)
+            if(availableFormat.Format == Format.B8G8R8A8Srgb && availableFormat.ColorSpace == ColorSpaceKHR.SpaceSrgbNonlinearKhr)
             {
                 return availableFormat;
             }
@@ -936,13 +936,13 @@ unsafe class HelloTriangleApplication
     {
         foreach (var availablePresentMode in availablePresentModes)
         {
-            if(availablePresentMode == PresentModeKHR.PresentModeMailboxKhr)
+            if(availablePresentMode == PresentModeKHR.MailboxKhr)
             {
                 return availablePresentMode;
             }
         }
 
-        return PresentModeKHR.PresentModeFifoKhr;
+        return PresentModeKHR.FifoKhr;
     }
 
     private Extent2D ChooseSwapExtent(SurfaceCapabilitiesKHR capabilities)
@@ -1059,7 +1059,7 @@ unsafe class HelloTriangleApplication
         uint i = 0;
         foreach (var queueFamily in queueFamilies)
         {
-            if (queueFamily.QueueFlags.HasFlag(QueueFlags.QueueGraphicsBit))
+            if (queueFamily.QueueFlags.HasFlag(QueueFlags.GraphicsBit))
             {
                 indices.GraphicsFamily = i;
             }

@@ -9,9 +9,9 @@
 	</PropertyGroup>
 
 	<ItemGroup>
-		<PackageReference Include="Silk.NET" Version="2.16.0" />
-		<PackageReference Include="Silk.NET.Vulkan.Extensions.EXT" Version="2.16.0" />
-		<PackageReference Include="SixLabors.ImageSharp" Version="2.1.3" />
+		<PackageReference Include="Silk.NET" Version="2.17.0" />
+		<PackageReference Include="Silk.NET.Vulkan.Extensions.EXT" Version="2.17.0" />
+		<PackageReference Include="SixLabors.ImageSharp" Version="3.0.1" />
 	</ItemGroup>
 
 	<ItemGroup>

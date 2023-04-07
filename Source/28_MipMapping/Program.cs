@@ -11,6 +11,7 @@ using Silk.NET.Vulkan.Extensions.KHR;
 using Silk.NET.Windowing;
 using Semaphore = Silk.NET.Vulkan.Semaphore;
 using Buffer = Silk.NET.Vulkan.Buffer;
+using Image = Silk.NET.Vulkan.Image;
 using Silk.NET.Assimp;
 
 var app = new HelloTriangleApplication();
@@ -414,12 +415,12 @@ unsafe class HelloTriangleApplication
     private void PopulateDebugMessengerCreateInfo(ref DebugUtilsMessengerCreateInfoEXT createInfo)
     {
         createInfo.SType = StructureType.DebugUtilsMessengerCreateInfoExt;
-        createInfo.MessageSeverity = DebugUtilsMessageSeverityFlagsEXT.DebugUtilsMessageSeverityVerboseBitExt |
-                                     DebugUtilsMessageSeverityFlagsEXT.DebugUtilsMessageSeverityWarningBitExt |
-                                     DebugUtilsMessageSeverityFlagsEXT.DebugUtilsMessageSeverityErrorBitExt;
-        createInfo.MessageType = DebugUtilsMessageTypeFlagsEXT.DebugUtilsMessageTypeGeneralBitExt |
-                                 DebugUtilsMessageTypeFlagsEXT.DebugUtilsMessageTypePerformanceBitExt |
-                                 DebugUtilsMessageTypeFlagsEXT.DebugUtilsMessageTypeValidationBitExt;
+        createInfo.MessageSeverity = DebugUtilsMessageSeverityFlagsEXT.VerboseBitExt |
+                                     DebugUtilsMessageSeverityFlagsEXT.WarningBitExt |
+                                     DebugUtilsMessageSeverityFlagsEXT.ErrorBitExt;
+        createInfo.MessageType = DebugUtilsMessageTypeFlagsEXT.GeneralBitExt |
+                                 DebugUtilsMessageTypeFlagsEXT.PerformanceBitExt |
+                                 DebugUtilsMessageTypeFlagsEXT.ValidationBitExt;
         createInfo.PfnUserCallback = (DebugUtilsMessengerCallbackFunctionEXT)DebugCallback;
     }
 
@@ -573,7 +574,7 @@ unsafe class HelloTriangleApplication
             ImageColorSpace = surfaceFormat.ColorSpace,
             ImageExtent = extent,
             ImageArrayLayers = 1,
-            ImageUsage = ImageUsageFlags.ImageUsageColorAttachmentBit,
+            ImageUsage = ImageUsageFlags.ColorAttachmentBit,
         };
 
         var indices = FindQueueFamilies(physicalDevice);
@@ -596,7 +597,7 @@ unsafe class HelloTriangleApplication
         creatInfo = creatInfo with
         {
             PreTransform = swapChainSupport.Capabilities.CurrentTransform,
-            CompositeAlpha = CompositeAlphaFlagsKHR.CompositeAlphaOpaqueBitKhr,
+            CompositeAlpha = CompositeAlphaFlagsKHR.OpaqueBitKhr,
             PresentMode = presentMode,
             Clipped = true,
         };
@@ -632,7 +633,7 @@ unsafe class HelloTriangleApplication
         for (int i = 0; i < swapChainImages.Length; i++)
         {
 
-            swapChainImageViews[i] = CreateImageView(swapChainImages[i], swapChainImageFormat, ImageAspectFlags.ImageAspectColorBit, 1);
+            swapChainImageViews[i] = CreateImageView(swapChainImages[i], swapChainImageFormat, ImageAspectFlags.ColorBit, 1);
         }
     }
 
@@ -641,7 +642,7 @@ unsafe class HelloTriangleApplication
         AttachmentDescription colorAttachment = new()
         {
             Format = swapChainImageFormat,
-            Samples = SampleCountFlags.SampleCount1Bit,
+            Samples = SampleCountFlags.Count1Bit,
             LoadOp = AttachmentLoadOp.Clear,
             StoreOp = AttachmentStoreOp.Store,
             StencilLoadOp = AttachmentLoadOp.DontCare,
@@ -652,7 +653,7 @@ unsafe class HelloTriangleApplication
         AttachmentDescription depthAttachment = new()
         {
             Format = FindDepthFormat(),
-            Samples = SampleCountFlags.SampleCount1Bit,
+            Samples = SampleCountFlags.Count1Bit,
             LoadOp = AttachmentLoadOp.Clear,
             StoreOp = AttachmentStoreOp.DontCare,
             StencilLoadOp = AttachmentLoadOp.DontCare,
@@ -685,10 +686,10 @@ unsafe class HelloTriangleApplication
         {
             SrcSubpass = Vk.SubpassExternal,
             DstSubpass = 0,
-            SrcStageMask = PipelineStageFlags.PipelineStageColorAttachmentOutputBit | PipelineStageFlags.PipelineStageEarlyFragmentTestsBit,
+            SrcStageMask = PipelineStageFlags.ColorAttachmentOutputBit | PipelineStageFlags.EarlyFragmentTestsBit,
             SrcAccessMask = 0,
-            DstStageMask = PipelineStageFlags.PipelineStageColorAttachmentOutputBit | PipelineStageFlags.PipelineStageEarlyFragmentTestsBit,
-            DstAccessMask = AccessFlags.AccessColorAttachmentWriteBit | AccessFlags.AccessDepthStencilAttachmentWriteBit
+            DstStageMask = PipelineStageFlags.ColorAttachmentOutputBit | PipelineStageFlags.EarlyFragmentTestsBit,
+            DstAccessMask = AccessFlags.ColorAttachmentWriteBit | AccessFlags.DepthStencilAttachmentWriteBit
         };
 
         var attachments = new[] { colorAttachment, depthAttachment };
@@ -721,7 +722,7 @@ unsafe class HelloTriangleApplication
             DescriptorCount = 1,
             DescriptorType = DescriptorType.UniformBuffer,
             PImmutableSamplers = null,
-            StageFlags = ShaderStageFlags.ShaderStageVertexBit,
+            StageFlags = ShaderStageFlags.VertexBit,
         };
 
         DescriptorSetLayoutBinding samplerLayoutBinding = new()
@@ -730,7 +731,7 @@ unsafe class HelloTriangleApplication
             DescriptorCount = 1,
             DescriptorType = DescriptorType.CombinedImageSampler,
             PImmutableSamplers = null,
-            StageFlags = ShaderStageFlags.ShaderStageFragmentBit,
+            StageFlags = ShaderStageFlags.FragmentBit,
         };
 
         var bindings = new DescriptorSetLayoutBinding[] { uboLayoutBinding, samplerLayoutBinding };
@@ -763,7 +764,7 @@ unsafe class HelloTriangleApplication
         PipelineShaderStageCreateInfo vertShaderStageInfo = new()
         {
             SType = StructureType.PipelineShaderStageCreateInfo,
-            Stage = ShaderStageFlags.ShaderStageVertexBit,
+            Stage = ShaderStageFlags.VertexBit,
             Module = vertShaderModule,
             PName = (byte*)SilkMarshal.StringToPtr("main")
         };
@@ -771,7 +772,7 @@ unsafe class HelloTriangleApplication
         PipelineShaderStageCreateInfo fragShaderStageInfo = new()
         {
             SType = StructureType.PipelineShaderStageCreateInfo,
-            Stage = ShaderStageFlags.ShaderStageFragmentBit,
+            Stage = ShaderStageFlags.FragmentBit,
             Module = fragShaderModule,
             PName = (byte*)SilkMarshal.StringToPtr("main")
         };
@@ -837,7 +838,7 @@ unsafe class HelloTriangleApplication
                 RasterizerDiscardEnable = false,
                 PolygonMode = PolygonMode.Fill,
                 LineWidth = 1,
-                CullMode = CullModeFlags.CullModeBackBit,
+                CullMode = CullModeFlags.BackBit,
                 FrontFace = FrontFace.CounterClockwise,
                 DepthBiasEnable = false,
             };
@@ -846,7 +847,7 @@ unsafe class HelloTriangleApplication
             {
                 SType = StructureType.PipelineMultisampleStateCreateInfo,
                 SampleShadingEnable = false,
-                RasterizationSamples = SampleCountFlags.SampleCount1Bit,
+                RasterizationSamples = SampleCountFlags.Count1Bit,
             };
 
             PipelineDepthStencilStateCreateInfo depthStencil = new()
@@ -861,7 +862,7 @@ unsafe class HelloTriangleApplication
 
             PipelineColorBlendAttachmentState colorBlendAttachment = new()
             {
-                ColorWriteMask = ColorComponentFlags.ColorComponentRBit | ColorComponentFlags.ColorComponentGBit | ColorComponentFlags.ColorComponentBBit | ColorComponentFlags.ColorComponentABit,
+                ColorWriteMask = ColorComponentFlags.RBit | ColorComponentFlags.GBit | ColorComponentFlags.BBit | ColorComponentFlags.ABit,
                 BlendEnable = false,
             };
 
@@ -972,8 +973,8 @@ unsafe class HelloTriangleApplication
     {
         Format depthFormat = FindDepthFormat();
 
-        CreateImage(swapChainExtent.Width, swapChainExtent.Height, 1, depthFormat, ImageTiling.Optimal, ImageUsageFlags.ImageUsageDepthStencilAttachmentBit, MemoryPropertyFlags.MemoryPropertyDeviceLocalBit, ref depthImage, ref depthImageMemory);
-        depthImageView = CreateImageView(depthImage, depthFormat, ImageAspectFlags.ImageAspectDepthBit, 1);
+        CreateImage(swapChainExtent.Width, swapChainExtent.Height, 1, depthFormat, ImageTiling.Optimal, ImageUsageFlags.DepthStencilAttachmentBit, MemoryPropertyFlags.DeviceLocalBit, ref depthImage, ref depthImageMemory);
+        depthImageView = CreateImageView(depthImage, depthFormat, ImageAspectFlags.DepthBit, 1);
     }
 
     private Format FindSupportedFormat(IEnumerable<Format> candidates, ImageTiling tiling, FormatFeatureFlags features)
@@ -997,7 +998,7 @@ unsafe class HelloTriangleApplication
 
     private Format FindDepthFormat()
     {
-        return FindSupportedFormat(new[] { Format.D32Sfloat, Format.D32SfloatS8Uint, Format.D24UnormS8Uint }, ImageTiling.Optimal, FormatFeatureFlags.FormatFeatureDepthStencilAttachmentBit);
+        return FindSupportedFormat(new[] { Format.D32Sfloat, Format.D32SfloatS8Uint, Format.D24UnormS8Uint }, ImageTiling.Optimal, FormatFeatureFlags.DepthStencilAttachmentBit);
     }
 
     private void CreateTextureImage()
@@ -1009,14 +1010,14 @@ unsafe class HelloTriangleApplication
 
         Buffer stagingBuffer = default;
         DeviceMemory stagingBufferMemory = default;
-        CreateBuffer(imageSize, BufferUsageFlags.BufferUsageTransferSrcBit, MemoryPropertyFlags.MemoryPropertyHostVisibleBit | MemoryPropertyFlags.MemoryPropertyHostCoherentBit,ref stagingBuffer, ref stagingBufferMemory );
+        CreateBuffer(imageSize, BufferUsageFlags.TransferSrcBit, MemoryPropertyFlags.HostVisibleBit | MemoryPropertyFlags.HostCoherentBit,ref stagingBuffer, ref stagingBufferMemory );
 
         void* data;
         vk!.MapMemory(device, stagingBufferMemory, 0, imageSize, 0, &data);
         img.CopyPixelDataTo(new Span<byte>(data, (int)imageSize));
         vk!.UnmapMemory(device, stagingBufferMemory);
 
-        CreateImage((uint)img.Width, (uint)img.Height, mipLevels, Format.R8G8B8A8Srgb, ImageTiling.Optimal, ImageUsageFlags.ImageUsageTransferSrcBit | ImageUsageFlags.ImageUsageTransferDstBit | ImageUsageFlags.ImageUsageSampledBit, MemoryPropertyFlags.MemoryPropertyDeviceLocalBit, ref textureImage, ref textureImageMemory);
+        CreateImage((uint)img.Width, (uint)img.Height, mipLevels, Format.R8G8B8A8Srgb, ImageTiling.Optimal, ImageUsageFlags.TransferSrcBit | ImageUsageFlags.TransferDstBit | ImageUsageFlags.SampledBit, MemoryPropertyFlags.DeviceLocalBit, ref textureImage, ref textureImageMemory);
 
         TransitionImageLayout(textureImage, Format.R8G8B8A8Srgb, ImageLayout.Undefined, ImageLayout.TransferDstOptimal, mipLevels);
         CopyBufferToImage(stagingBuffer, textureImage, (uint)img.Width, (uint)img.Height);
@@ -1032,7 +1033,7 @@ unsafe class HelloTriangleApplication
     {
         vk!.GetPhysicalDeviceFormatProperties(physicalDevice, imageFormat, out var formatProperties);
 
-        if((formatProperties.OptimalTilingFeatures & FormatFeatureFlags.FormatFeatureSampledImageFilterLinearBit) == 0)
+        if((formatProperties.OptimalTilingFeatures & FormatFeatureFlags.SampledImageFilterLinearBit) == 0)
         {
             throw new Exception("texture image format does not support linear blitting!");
         }
@@ -1047,7 +1048,7 @@ unsafe class HelloTriangleApplication
             DstQueueFamilyIndex = Vk.QueueFamilyIgnored,
             SubresourceRange =
             {
-                AspectMask = ImageAspectFlags.ImageAspectColorBit,
+                AspectMask = ImageAspectFlags.ColorBit,
                 BaseArrayLayer = 0,
                 LayerCount = 1,
                 LevelCount = 1,
@@ -1062,10 +1063,10 @@ unsafe class HelloTriangleApplication
             barrier.SubresourceRange.BaseMipLevel = i - 1;
             barrier.OldLayout = ImageLayout.TransferDstOptimal;
             barrier.NewLayout = ImageLayout.TransferSrcOptimal;
-            barrier.SrcAccessMask = AccessFlags.AccessTransferWriteBit;
-            barrier.DstAccessMask = AccessFlags.AccessTransferReadBit;
+            barrier.SrcAccessMask = AccessFlags.TransferWriteBit;
+            barrier.DstAccessMask = AccessFlags.TransferReadBit;
 
-            vk!.CmdPipelineBarrier(commandBuffer, PipelineStageFlags.PipelineStageTransferBit, PipelineStageFlags.PipelineStageTransferBit, 0,
+            vk!.CmdPipelineBarrier(commandBuffer, PipelineStageFlags.TransferBit, PipelineStageFlags.TransferBit, 0,
                 0, null,
                 0, null,
                 1, barrier);
@@ -1079,7 +1080,7 @@ unsafe class HelloTriangleApplication
                 },
                 SrcSubresource =
                 {
-                    AspectMask = ImageAspectFlags.ImageAspectColorBit,
+                    AspectMask = ImageAspectFlags.ColorBit,
                     MipLevel = i - 1,
                     BaseArrayLayer = 0,
                     LayerCount = 1,                    
@@ -1091,7 +1092,7 @@ unsafe class HelloTriangleApplication
                 },
                 DstSubresource =
                 {
-                    AspectMask = ImageAspectFlags.ImageAspectColorBit,
+                    AspectMask = ImageAspectFlags.ColorBit,
                     MipLevel = i,
                     BaseArrayLayer = 0,
                     LayerCount = 1,
@@ -1107,10 +1108,10 @@ unsafe class HelloTriangleApplication
 
             barrier.OldLayout = ImageLayout.TransferSrcOptimal;
             barrier.NewLayout = ImageLayout.ShaderReadOnlyOptimal;
-            barrier.SrcAccessMask = AccessFlags.AccessTransferReadBit;
-            barrier.DstAccessMask = AccessFlags.AccessShaderReadBit;
+            barrier.SrcAccessMask = AccessFlags.TransferReadBit;
+            barrier.DstAccessMask = AccessFlags.ShaderReadBit;
 
-            vk!.CmdPipelineBarrier(commandBuffer, PipelineStageFlags.PipelineStageTransferBit, PipelineStageFlags.PipelineStageFragmentShaderBit, 0,
+            vk!.CmdPipelineBarrier(commandBuffer, PipelineStageFlags.TransferBit, PipelineStageFlags.FragmentShaderBit, 0,
                 0, null,
                 0, null,
                 1, barrier);
@@ -1122,10 +1123,10 @@ unsafe class HelloTriangleApplication
         barrier.SubresourceRange.BaseMipLevel = mipLevels - 1;
         barrier.OldLayout = ImageLayout.TransferDstOptimal;
         barrier.NewLayout = ImageLayout.ShaderReadOnlyOptimal;
-        barrier.SrcAccessMask = AccessFlags.AccessTransferWriteBit;
-        barrier.DstAccessMask = AccessFlags.AccessShaderReadBit;
+        barrier.SrcAccessMask = AccessFlags.TransferWriteBit;
+        barrier.DstAccessMask = AccessFlags.ShaderReadBit;
 
-        vk!.CmdPipelineBarrier(commandBuffer, PipelineStageFlags.PipelineStageTransferBit, PipelineStageFlags.PipelineStageFragmentShaderBit, 0,
+        vk!.CmdPipelineBarrier(commandBuffer, PipelineStageFlags.TransferBit, PipelineStageFlags.FragmentShaderBit, 0,
             0, null,
             0, null,
             1, barrier);
@@ -1135,7 +1136,7 @@ unsafe class HelloTriangleApplication
 
     private void CreateTextureImageView()
     {
-        textureImageView = CreateImageView(textureImage, Format.R8G8B8A8Srgb, ImageAspectFlags.ImageAspectColorBit, mipLevels);
+        textureImageView = CreateImageView(textureImage, Format.R8G8B8A8Srgb, ImageAspectFlags.ColorBit, mipLevels);
     }
 
     private void CreateTextureSampler()
@@ -1178,7 +1179,7 @@ unsafe class HelloTriangleApplication
         {
             SType = StructureType.ImageViewCreateInfo,
             Image = image,
-            ViewType = ImageViewType.ImageViewType2D,
+            ViewType = ImageViewType.Type2D,
             Format = format,
             //Components =
             //    {
@@ -1213,7 +1214,7 @@ unsafe class HelloTriangleApplication
         ImageCreateInfo imageInfo = new()
         {
             SType = StructureType.ImageCreateInfo,
-            ImageType = ImageType.ImageType2D,
+            ImageType = ImageType.Type2D,
             Extent =
             {
                 Width = width,
@@ -1226,7 +1227,7 @@ unsafe class HelloTriangleApplication
             Tiling = tiling,
             InitialLayout = ImageLayout.Undefined,
             Usage = usage,
-            Samples = SampleCountFlags.SampleCount1Bit,
+            Samples = SampleCountFlags.Count1Bit,
             SharingMode = SharingMode.Exclusive,
         };
 
@@ -1273,7 +1274,7 @@ unsafe class HelloTriangleApplication
             Image = image,
             SubresourceRange =
             {
-                AspectMask = ImageAspectFlags.ImageAspectColorBit,
+                AspectMask = ImageAspectFlags.ColorBit,
                 BaseMipLevel = 0,
                 LevelCount = mipLevels,
                 BaseArrayLayer = 0,
@@ -1287,18 +1288,18 @@ unsafe class HelloTriangleApplication
         if(oldLayout == ImageLayout.Undefined && newLayout == ImageLayout.TransferDstOptimal)
         {
             barrier.SrcAccessMask = 0;
-            barrier.DstAccessMask = AccessFlags.AccessTransferWriteBit;
+            barrier.DstAccessMask = AccessFlags.TransferWriteBit;
 
-            sourceStage = PipelineStageFlags.PipelineStageTopOfPipeBit;
-            destinationStage = PipelineStageFlags.PipelineStageTransferBit;
+            sourceStage = PipelineStageFlags.TopOfPipeBit;
+            destinationStage = PipelineStageFlags.TransferBit;
         }
         else if (oldLayout == ImageLayout.TransferDstOptimal && newLayout == ImageLayout.ShaderReadOnlyOptimal)
         {
-            barrier.SrcAccessMask = AccessFlags.AccessTransferWriteBit;
-            barrier.DstAccessMask = AccessFlags.AccessShaderReadBit;
+            barrier.SrcAccessMask = AccessFlags.TransferWriteBit;
+            barrier.DstAccessMask = AccessFlags.ShaderReadBit;
 
-            sourceStage = PipelineStageFlags.PipelineStageTransferBit;
-            destinationStage = PipelineStageFlags.PipelineStageFragmentShaderBit;
+            sourceStage = PipelineStageFlags.TransferBit;
+            destinationStage = PipelineStageFlags.FragmentShaderBit;
         }
         else
         {
@@ -1322,7 +1323,7 @@ unsafe class HelloTriangleApplication
             BufferImageHeight = 0,
             ImageSubresource =
             {
-                AspectMask = ImageAspectFlags.ImageAspectColorBit,
+                AspectMask = ImageAspectFlags.ColorBit,
                 MipLevel = 0,
                 BaseArrayLayer = 0,
                 LayerCount = 1,                
@@ -1406,14 +1407,14 @@ unsafe class HelloTriangleApplication
 
         Buffer stagingBuffer = default;
         DeviceMemory stagingBufferMemory = default;
-        CreateBuffer(bufferSize, BufferUsageFlags.BufferUsageTransferSrcBit, MemoryPropertyFlags.MemoryPropertyHostVisibleBit | MemoryPropertyFlags.MemoryPropertyHostCoherentBit, ref stagingBuffer, ref stagingBufferMemory);
+        CreateBuffer(bufferSize, BufferUsageFlags.TransferSrcBit, MemoryPropertyFlags.HostVisibleBit | MemoryPropertyFlags.HostCoherentBit, ref stagingBuffer, ref stagingBufferMemory);
         
         void* data;
         vk!.MapMemory(device, stagingBufferMemory, 0, bufferSize, 0, &data);
             vertices.AsSpan().CopyTo(new Span<Vertex>(data, vertices.Length));
         vk!.UnmapMemory(device, stagingBufferMemory);
 
-        CreateBuffer(bufferSize, BufferUsageFlags.BufferUsageTransferDstBit | BufferUsageFlags.BufferUsageVertexBufferBit, MemoryPropertyFlags.MemoryPropertyDeviceLocalBit, ref vertexBuffer, ref vertexBufferMemory);
+        CreateBuffer(bufferSize, BufferUsageFlags.TransferDstBit | BufferUsageFlags.VertexBufferBit, MemoryPropertyFlags.DeviceLocalBit, ref vertexBuffer, ref vertexBufferMemory);
 
         CopyBuffer(stagingBuffer, vertexBuffer, bufferSize);
 
@@ -1427,14 +1428,14 @@ unsafe class HelloTriangleApplication
 
         Buffer stagingBuffer = default;
         DeviceMemory stagingBufferMemory = default;
-        CreateBuffer(bufferSize, BufferUsageFlags.BufferUsageTransferSrcBit, MemoryPropertyFlags.MemoryPropertyHostVisibleBit | MemoryPropertyFlags.MemoryPropertyHostCoherentBit, ref stagingBuffer, ref stagingBufferMemory);
+        CreateBuffer(bufferSize, BufferUsageFlags.TransferSrcBit, MemoryPropertyFlags.HostVisibleBit | MemoryPropertyFlags.HostCoherentBit, ref stagingBuffer, ref stagingBufferMemory);
 
         void* data;
         vk!.MapMemory(device, stagingBufferMemory, 0, bufferSize, 0, &data);
             indices.AsSpan().CopyTo(new Span<uint>(data, indices.Length));
         vk!.UnmapMemory(device, stagingBufferMemory);
 
-        CreateBuffer(bufferSize, BufferUsageFlags.BufferUsageTransferDstBit | BufferUsageFlags.BufferUsageIndexBufferBit, MemoryPropertyFlags.MemoryPropertyDeviceLocalBit, ref indexBuffer, ref indexBufferMemory);
+        CreateBuffer(bufferSize, BufferUsageFlags.TransferDstBit | BufferUsageFlags.IndexBufferBit, MemoryPropertyFlags.DeviceLocalBit, ref indexBuffer, ref indexBufferMemory);
 
         CopyBuffer(stagingBuffer, indexBuffer, bufferSize);
 
@@ -1451,7 +1452,7 @@ unsafe class HelloTriangleApplication
 
         for (int i = 0; i < swapChainImages.Length; i++)
         {
-            CreateBuffer(bufferSize, BufferUsageFlags.BufferUsageUniformBufferBit, MemoryPropertyFlags.MemoryPropertyHostVisibleBit | MemoryPropertyFlags.MemoryPropertyHostCoherentBit, ref uniformBuffers[i], ref uniformBuffersMemory[i]);   
+            CreateBuffer(bufferSize, BufferUsageFlags.UniformBufferBit, MemoryPropertyFlags.HostVisibleBit | MemoryPropertyFlags.HostCoherentBit, ref uniformBuffers[i], ref uniformBuffersMemory[i]);   
         }
 
     }
@@ -1622,7 +1623,7 @@ unsafe class HelloTriangleApplication
         CommandBufferBeginInfo beginInfo = new()
         {
             SType = StructureType.CommandBufferBeginInfo,
-            Flags = CommandBufferUsageFlags.CommandBufferUsageOneTimeSubmitBit,
+            Flags = CommandBufferUsageFlags.OneTimeSubmitBit,
         };
 
         vk!.BeginCommandBuffer(commandBuffer, beginInfo);
@@ -1785,7 +1786,7 @@ unsafe class HelloTriangleApplication
         FenceCreateInfo fenceInfo = new()
         {
             SType = StructureType.FenceCreateInfo,
-            Flags = FenceCreateFlags.FenceCreateSignaledBit,
+            Flags = FenceCreateFlags.SignaledBit,
         };
 
         for (var i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
@@ -1851,7 +1852,7 @@ unsafe class HelloTriangleApplication
         };
 
         var waitSemaphores = stackalloc [] {imageAvailableSemaphores[currentFrame]};
-        var waitStages = stackalloc [] { PipelineStageFlags.PipelineStageColorAttachmentOutputBit };
+        var waitStages = stackalloc [] { PipelineStageFlags.ColorAttachmentOutputBit };
 
         var buffer = commandBuffers![imageIndex];
 
@@ -1937,7 +1938,7 @@ unsafe class HelloTriangleApplication
     {
         foreach (var availableFormat in availableFormats)
         {
-            if(availableFormat.Format == Format.B8G8R8A8Srgb && availableFormat.ColorSpace == ColorSpaceKHR.ColorSpaceSrgbNonlinearKhr)
+            if(availableFormat.Format == Format.B8G8R8A8Srgb && availableFormat.ColorSpace == ColorSpaceKHR.SpaceSrgbNonlinearKhr)
             {
                 return availableFormat;
             }
@@ -1950,13 +1951,13 @@ unsafe class HelloTriangleApplication
     {
         foreach (var availablePresentMode in availablePresentModes)
         {
-            if(availablePresentMode == PresentModeKHR.PresentModeMailboxKhr)
+            if(availablePresentMode == PresentModeKHR.MailboxKhr)
             {
                 return availablePresentMode;
             }
         }
 
-        return PresentModeKHR.PresentModeFifoKhr;
+        return PresentModeKHR.FifoKhr;
     }
 
     private Extent2D ChooseSwapExtent(SurfaceCapabilitiesKHR capabilities)
@@ -2076,7 +2077,7 @@ unsafe class HelloTriangleApplication
         uint i = 0;
         foreach (var queueFamily in queueFamilies)
         {
-            if (queueFamily.QueueFlags.HasFlag(QueueFlags.QueueGraphicsBit))
+            if (queueFamily.QueueFlags.HasFlag(QueueFlags.GraphicsBit))
             {
                 indices.GraphicsFamily = i;
             }
