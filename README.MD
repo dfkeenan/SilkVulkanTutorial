@@ -6,7 +6,11 @@ C# [Silk.NET](https://github.com/dotnet/Silk.NET) port of the [great tutorial by
 
 The projects require the [Vulkan SDK](https://www.lunarg.com/vulkan-sdk/) to build/run. The SDK provides the Vulkan validation layers as well as the command line tools to compile the shaders. The projects include a targets file that compiles the shaders.
 
-## Asset Licenses
+## Licenses
+
+The code listings in the `Source` directory are licensed as [CC0 1.0 Universal](https://creativecommons.org/publicdomain/zero/1.0/).
+By contributing to that directory, you agree to license your contributions to
+the public under that same public domain-like license.
 
 This repository includes the same assets as the original tutorial assets. They are located in the `Assets/` folder.
 
