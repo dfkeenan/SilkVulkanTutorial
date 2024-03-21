@@ -9,8 +9,8 @@
 	</PropertyGroup>
 
 	<ItemGroup>
-		<PackageReference Include="Silk.NET" Version="2.19.0" />
-		<PackageReference Include="Silk.NET.Vulkan.Extensions.EXT" Version="2.19.0" />
+		<PackageReference Include="Silk.NET" />
+		<PackageReference Include="Silk.NET.Vulkan.Extensions.EXT" />
 	</ItemGroup>
 
 	<ItemGroup>

@@ -27,6 +27,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Build", "Build", "{F7CA3EA9
 	ProjectSection(SolutionItems) = preProject
 		Directory.Build.props = Directory.Build.props
 		Directory.Build.targets = Directory.Build.targets
+		Directory.Packages.props = Directory.Packages.props
 	EndProjectSection
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "10_FixedFunctions", "10_FixedFunctions\10_FixedFunctions.csproj", "{952CA805-7465-425F-AE44-D41C9FFBC1E7}"
@@ -41,33 +42,33 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "14_CommandBuffers", "14_Com
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "15_HelloTriangle", "15_HelloTriangle\15_HelloTriangle.csproj", "{335BCBAB-CD9E-43CB-A9EE-2D771548BBCD}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "16_SwapChainRecreation", "16_SwapChainRecreation\16_SwapChainRecreation.csproj", "{6D5157A5-267C-4903-94B3-65258DDA7479}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "16_SwapChainRecreation", "16_SwapChainRecreation\16_SwapChainRecreation.csproj", "{6D5157A5-267C-4903-94B3-65258DDA7479}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "17_VertexInput", "17_VertexInput\17_VertexInput.csproj", "{06CA77F9-5B62-4E04-905B-90C06002DBC1}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "17_VertexInput", "17_VertexInput\17_VertexInput.csproj", "{06CA77F9-5B62-4E04-905B-90C06002DBC1}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "18_VertexBuffer", "18_VertexBuffer\18_VertexBuffer.csproj", "{168D28F6-B62B-4612-8C64-DC2929A9E9B6}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "18_VertexBuffer", "18_VertexBuffer\18_VertexBuffer.csproj", "{168D28F6-B62B-4612-8C64-DC2929A9E9B6}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "19_StagingBuffer", "19_StagingBuffer\19_StagingBuffer.csproj", "{C1006FA3-360D-4765-9C96-A7F6BA8A2848}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "19_StagingBuffer", "19_StagingBuffer\19_StagingBuffer.csproj", "{C1006FA3-360D-4765-9C96-A7F6BA8A2848}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "20_IndexBuffer", "20_IndexBuffer\20_IndexBuffer.csproj", "{2C43C00B-8797-4768-A329-91853343065D}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "20_IndexBuffer", "20_IndexBuffer\20_IndexBuffer.csproj", "{2C43C00B-8797-4768-A329-91853343065D}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "21_DescriptorLayout", "21_DescriptorLayout\21_DescriptorLayout.csproj", "{673C0201-12D8-4FB9-8968-0DA76B6C1304}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "21_DescriptorLayout", "21_DescriptorLayout\21_DescriptorLayout.csproj", "{673C0201-12D8-4FB9-8968-0DA76B6C1304}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "22_DescriptorSets", "22_DescriptorSets\22_DescriptorSets.csproj", "{1F513B23-687D-42D1-B743-DAED221109BC}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "22_DescriptorSets", "22_DescriptorSets\22_DescriptorSets.csproj", "{1F513B23-687D-42D1-B743-DAED221109BC}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "23_TextureImage", "23_TextureImage\23_TextureImage.csproj", "{1B643580-218A-4139-BCB2-39D97E933300}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "23_TextureImage", "23_TextureImage\23_TextureImage.csproj", "{1B643580-218A-4139-BCB2-39D97E933300}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "24_Sampler", "24_Sampler\24_Sampler.csproj", "{3E3E3F52-97A5-4573-A410-A4FEDA002A32}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "24_Sampler", "24_Sampler\24_Sampler.csproj", "{3E3E3F52-97A5-4573-A410-A4FEDA002A32}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "25_TextureMapping", "25_TextureMapping\25_TextureMapping.csproj", "{FDCC0F54-21EA-485D-91FD-E62A6C68BCA9}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "25_TextureMapping", "25_TextureMapping\25_TextureMapping.csproj", "{FDCC0F54-21EA-485D-91FD-E62A6C68BCA9}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "26_DepthBuffering", "26_DepthBuffering\26_DepthBuffering.csproj", "{3105D433-052A-4FF1-B42B-0888EA8B26D1}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "26_DepthBuffering", "26_DepthBuffering\26_DepthBuffering.csproj", "{3105D433-052A-4FF1-B42B-0888EA8B26D1}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "27_ModelLoading", "27_ModelLoading\27_ModelLoading.csproj", "{AE9D3A69-CE3B-4331-A192-79256B0E06F4}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "27_ModelLoading", "27_ModelLoading\27_ModelLoading.csproj", "{AE9D3A69-CE3B-4331-A192-79256B0E06F4}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "28_MipMapping", "28_MipMapping\28_MipMapping.csproj", "{ED5B7DDC-64F6-4896-9FA8-F9D71AA63C94}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "28_MipMapping", "28_MipMapping\28_MipMapping.csproj", "{ED5B7DDC-64F6-4896-9FA8-F9D71AA63C94}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "29_Multisampling", "29_Multisampling\29_Multisampling.csproj", "{B52632AA-C8B3-4498-AD98-D83040ECE38B}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "29_Multisampling", "29_Multisampling\29_Multisampling.csproj", "{B52632AA-C8B3-4498-AD98-D83040ECE38B}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
