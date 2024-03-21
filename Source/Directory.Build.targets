@@ -10,7 +10,7 @@
 		<Message Text="VertexShader: @(VertexShader)" Importance="high"/>
 		<Message Text="FragmentShader: @(FragmentShader)" Importance="high"/>
 		<MakeDir Directories="$(TargetDir)$(ShaderOutputPath)" Condition="!Exists('$(TargetDir)$(ShaderOutputPath)')"  />
-		<Exec Command="$(VulkanBinPath)\glslc.exe &quot;%(VertexShader.FullPath)&quot; -o &quot;$(TargetDir)$(ShaderOutputPath)\vert.spv&quot;" Condition="'@(VertexShader)'!=''" />
-		<Exec Command="$(VulkanBinPath)\glslc.exe &quot;%(FragmentShader.FullPath)&quot; -o &quot;$(TargetDir)$(ShaderOutputPath)\frag.spv&quot;" Condition="'@(FragmentShader)'!=''"/>
+		<Exec Command="&quot;$(VulkanBinPath)\glslc.exe&quot; &quot;%(VertexShader.FullPath)&quot; -o &quot;$(TargetDir)$(ShaderOutputPath)\vert.spv&quot;" Condition="'@(VertexShader)'!=''" />
+		<Exec Command="&quot;$(VulkanBinPath)\glslc.exe&quot; &quot;%(FragmentShader.FullPath)&quot; -o &quot;$(TargetDir)$(ShaderOutputPath)\frag.spv&quot;" Condition="'@(FragmentShader)'!=''"/>
 	</Target>
 </Project>
