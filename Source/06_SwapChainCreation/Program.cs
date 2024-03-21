@@ -228,19 +228,7 @@ unsafe class HelloTriangleApplication
 
     private void PickPhysicalDevice()
     {
-        uint devicedCount = 0;
-        vk!.EnumeratePhysicalDevices(instance, ref devicedCount, null);
-
-        if (devicedCount == 0)
-        {
-            throw new Exception("failed to find GPUs with Vulkan support!");
-        }
-
-        var devices = new PhysicalDevice[devicedCount];
-        fixed (PhysicalDevice* devicesPtr = devices)
-        {
-            vk!.EnumeratePhysicalDevices(instance, ref devicedCount, devicesPtr);
-        }
+        var devices = vk!.GetPhysicalDevices(instance);
 
         foreach (var device in devices)
         {
