@@ -152,7 +152,7 @@ unsafe class HelloTriangleApplication
             createInfo.PNext = null;
         }
 
-        if (vk.CreateInstance(createInfo, null, out instance) != Result.Success)
+        if (vk.CreateInstance(in createInfo, null, out instance) != Result.Success)
         {
             throw new Exception("failed to create instance!");
         }

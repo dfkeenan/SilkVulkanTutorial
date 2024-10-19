@@ -188,7 +188,7 @@ unsafe class HelloTriangleApplication
             createInfo.PNext = null;
         }
 
-        if (vk.CreateInstance(createInfo, null, out instance) != Result.Success)
+        if (vk.CreateInstance(in createInfo, null, out instance) != Result.Success)
         {
             throw new Exception("failed to create instance!");
         }
@@ -382,7 +382,7 @@ unsafe class HelloTriangleApplication
             throw new NotSupportedException("VK_KHR_swapchain extension not found.");
         }
 
-        if (khrSwapChain!.CreateSwapchain(device, creatInfo, null, out swapChain) != Result.Success)
+        if (khrSwapChain!.CreateSwapchain(device, in creatInfo, null, out swapChain) != Result.Success)
         {
             throw new Exception("failed to create swap chain!");
         }
@@ -428,7 +428,7 @@ unsafe class HelloTriangleApplication
 
             };
 
-            if (vk!.CreateImageView(device, createInfo, null, out swapChainImageViews[i]) != Result.Success)
+            if (vk!.CreateImageView(device, in createInfo, null, out swapChainImageViews[i]) != Result.Success)
             {
                 throw new Exception("failed to create image views!");
             }
@@ -470,7 +470,7 @@ unsafe class HelloTriangleApplication
             PSubpasses = &subpass,
         };
 
-        if (vk!.CreateRenderPass(device, renderPassInfo, null, out renderPass) != Result.Success)
+        if (vk!.CreateRenderPass(device, in renderPassInfo, null, out renderPass) != Result.Success)
         {
             throw new Exception("failed to create render pass!");
         }
@@ -591,7 +591,7 @@ unsafe class HelloTriangleApplication
             PushConstantRangeCount = 0,
         };
 
-        if (vk!.CreatePipelineLayout(device, pipelineLayoutInfo, null, out pipelineLayout) != Result.Success)
+        if (vk!.CreatePipelineLayout(device, in pipelineLayoutInfo, null, out pipelineLayout) != Result.Success)
         {
             throw new Exception("failed to create pipeline layout!");
         }
@@ -618,7 +618,7 @@ unsafe class HelloTriangleApplication
         {
             createInfo.PCode = (uint*)codePtr;
 
-            if (vk!.CreateShaderModule(device, createInfo, null, out shaderModule) != Result.Success)
+            if (vk!.CreateShaderModule(device, in createInfo, null, out shaderModule) != Result.Success)
             {
                 throw new Exception();
             }

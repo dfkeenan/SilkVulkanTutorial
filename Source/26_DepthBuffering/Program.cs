@@ -404,7 +404,7 @@ unsafe class HelloTriangleApplication
             createInfo.PNext = null;
         }
 
-        if (vk.CreateInstance(createInfo, null, out instance) != Result.Success)
+        if (vk.CreateInstance(in createInfo, null, out instance) != Result.Success)
         {
             throw new Exception("failed to create instance!");
         }
@@ -603,7 +603,7 @@ unsafe class HelloTriangleApplication
             }
         }
 
-        if (khrSwapChain!.CreateSwapchain(device, creatInfo, null, out swapChain) != Result.Success)
+        if (khrSwapChain!.CreateSwapchain(device, in creatInfo, null, out swapChain) != Result.Success)
         {
             throw new Exception("failed to create swap chain!");
         }
@@ -700,7 +700,7 @@ unsafe class HelloTriangleApplication
                 PDependencies = &dependency,
             };
 
-            if (vk!.CreateRenderPass(device, renderPassInfo, null, out renderPass) != Result.Success)
+            if (vk!.CreateRenderPass(device, in renderPassInfo, null, out renderPass) != Result.Success)
             {
                 throw new Exception("failed to create render pass!");
             }
@@ -739,7 +739,7 @@ unsafe class HelloTriangleApplication
                 PBindings = bindingsPtr,
             };
 
-            if (vk!.CreateDescriptorSetLayout(device, layoutInfo, null, descriptorSetLayoutPtr) != Result.Success)
+            if (vk!.CreateDescriptorSetLayout(device, in layoutInfo, null, descriptorSetLayoutPtr) != Result.Success)
             {
                 throw new Exception("failed to create descriptor set layout!");
             }
@@ -881,7 +881,7 @@ unsafe class HelloTriangleApplication
                 PSetLayouts = descriptorSetLayoutPtr
             };
 
-            if (vk!.CreatePipelineLayout(device, pipelineLayoutInfo, null, out pipelineLayout) != Result.Success)
+            if (vk!.CreatePipelineLayout(device, in pipelineLayoutInfo, null, out pipelineLayout) != Result.Success)
             {
                 throw new Exception("failed to create pipeline layout!");
             }
@@ -904,7 +904,7 @@ unsafe class HelloTriangleApplication
                 BasePipelineHandle = default
             };
 
-            if (vk!.CreateGraphicsPipelines(device, default, 1, pipelineInfo, null, out graphicsPipeline) != Result.Success)
+            if (vk!.CreateGraphicsPipelines(device, default, 1, in pipelineInfo, null, out graphicsPipeline) != Result.Success)
             {
                 throw new Exception("failed to create graphics pipeline!");
             }
@@ -938,7 +938,7 @@ unsafe class HelloTriangleApplication
                     Layers = 1,
                 };
 
-                if (vk!.CreateFramebuffer(device, framebufferInfo, null, out swapChainFramebuffers[i]) != Result.Success)
+                if (vk!.CreateFramebuffer(device, in framebufferInfo, null, out swapChainFramebuffers[i]) != Result.Success)
                 {
                     throw new Exception("failed to create framebuffer!");
                 }
@@ -956,7 +956,7 @@ unsafe class HelloTriangleApplication
             QueueFamilyIndex = queueFamiliyIndicies.GraphicsFamily!.Value,
         };
 
-        if (vk!.CreateCommandPool(device, poolInfo, null, out commandPool) != Result.Success)
+        if (vk!.CreateCommandPool(device, in poolInfo, null, out commandPool) != Result.Success)
         {
             throw new Exception("failed to create command pool!");
         }
@@ -1047,7 +1047,7 @@ unsafe class HelloTriangleApplication
 
         fixed (Sampler* textureSamplerPtr = &textureSampler)
         {
-            if (vk!.CreateSampler(device, samplerInfo, null, textureSamplerPtr) != Result.Success)
+            if (vk!.CreateSampler(device, in samplerInfo, null, textureSamplerPtr) != Result.Success)
             {
                 throw new Exception("failed to create texture sampler!");
             }
@@ -1081,7 +1081,7 @@ unsafe class HelloTriangleApplication
         };
 
 
-        if (vk!.CreateImageView(device, createInfo, null, out ImageView imageView) != Result.Success)
+        if (vk!.CreateImageView(device, in createInfo, null, out ImageView imageView) != Result.Success)
         {
             throw new Exception("failed to create image views!");
         }
@@ -1113,7 +1113,7 @@ unsafe class HelloTriangleApplication
 
         fixed (Image* imagePtr = &image)
         {
-            if (vk!.CreateImage(device, imageInfo, null, imagePtr) != Result.Success)
+            if (vk!.CreateImage(device, in imageInfo, null, imagePtr) != Result.Success)
             {
                 throw new Exception("failed to create image!");
             }
@@ -1130,7 +1130,7 @@ unsafe class HelloTriangleApplication
 
         fixed (DeviceMemory* imageMemoryPtr = &imageMemory)
         {
-            if (vk!.AllocateMemory(device, allocInfo, null, imageMemoryPtr) != Result.Success)
+            if (vk!.AllocateMemory(device, in allocInfo, null, imageMemoryPtr) != Result.Success)
             {
                 throw new Exception("failed to allocate image memory!");
             }
@@ -1185,7 +1185,7 @@ unsafe class HelloTriangleApplication
             throw new Exception("unsupported layout transition!");
         }
 
-        vk!.CmdPipelineBarrier(commandBuffer, sourceStage, destinationStage, 0, 0, null, 0, null, 1, barrier);
+        vk!.CmdPipelineBarrier(commandBuffer, sourceStage, destinationStage, 0, 0, null, 0, null, 1, in barrier);
 
         EndSingleTimeCommands(commandBuffer);
 
@@ -1212,7 +1212,7 @@ unsafe class HelloTriangleApplication
 
         };
 
-        vk!.CmdCopyBufferToImage(commandBuffer, buffer, image, ImageLayout.TransferDstOptimal, 1, region);
+        vk!.CmdCopyBufferToImage(commandBuffer, buffer, image, ImageLayout.TransferDstOptimal, 1, in region);
 
         EndSingleTimeCommands(commandBuffer);
     }
@@ -1303,7 +1303,7 @@ unsafe class HelloTriangleApplication
                 MaxSets = (uint)swapChainImages!.Length,
             };
 
-            if (vk!.CreateDescriptorPool(device, poolInfo, null, descriptorPoolPtr) != Result.Success)
+            if (vk!.CreateDescriptorPool(device, in poolInfo, null, descriptorPoolPtr) != Result.Success)
             {
                 throw new Exception("failed to create descriptor pool!");
             }
@@ -1329,7 +1329,7 @@ unsafe class HelloTriangleApplication
             descriptorSets = new DescriptorSet[swapChainImages.Length];
             fixed (DescriptorSet* descriptorSetsPtr = descriptorSets)
             {
-                if (vk!.AllocateDescriptorSets(device, allocateInfo, descriptorSetsPtr) != Result.Success)
+                if (vk!.AllocateDescriptorSets(device, in allocateInfo, descriptorSetsPtr) != Result.Success)
                 {
                     throw new Exception("failed to allocate descriptor sets!");
                 }
@@ -1398,7 +1398,7 @@ unsafe class HelloTriangleApplication
 
         fixed (Buffer* bufferPtr = &buffer)
         {
-            if (vk!.CreateBuffer(device, bufferInfo, null, bufferPtr) != Result.Success)
+            if (vk!.CreateBuffer(device, in bufferInfo, null, bufferPtr) != Result.Success)
             {
                 throw new Exception("failed to create vertex buffer!");
             }
@@ -1416,7 +1416,7 @@ unsafe class HelloTriangleApplication
 
         fixed (DeviceMemory* bufferMemoryPtr = &bufferMemory)
         {
-            if (vk!.AllocateMemory(device, allocateInfo, null, bufferMemoryPtr) != Result.Success)
+            if (vk!.AllocateMemory(device, in allocateInfo, null, bufferMemoryPtr) != Result.Success)
             {
                 throw new Exception("failed to allocate vertex buffer memory!");
             }
@@ -1435,7 +1435,7 @@ unsafe class HelloTriangleApplication
             CommandBufferCount = 1,
         };
 
-        vk!.AllocateCommandBuffers(device, allocateInfo, out CommandBuffer commandBuffer);
+        vk!.AllocateCommandBuffers(device, in allocateInfo, out CommandBuffer commandBuffer);
 
         CommandBufferBeginInfo beginInfo = new()
         {
@@ -1443,7 +1443,7 @@ unsafe class HelloTriangleApplication
             Flags = CommandBufferUsageFlags.OneTimeSubmitBit,
         };
 
-        vk!.BeginCommandBuffer(commandBuffer, beginInfo);
+        vk!.BeginCommandBuffer(commandBuffer, in beginInfo);
 
         return commandBuffer;
     }
@@ -1459,10 +1459,10 @@ unsafe class HelloTriangleApplication
             PCommandBuffers = &commandBuffer,
         };
 
-        vk!.QueueSubmit(graphicsQueue, 1, submitInfo, default);
+        vk!.QueueSubmit(graphicsQueue, 1, in submitInfo, default);
         vk!.QueueWaitIdle(graphicsQueue);
 
-        vk!.FreeCommandBuffers(device, commandPool, 1, commandBuffer);
+        vk!.FreeCommandBuffers(device, commandPool, 1, in commandBuffer);
     }
 
     private void CopyBuffer(Buffer srcBuffer, Buffer dstBuffer, ulong size)
@@ -1474,7 +1474,7 @@ unsafe class HelloTriangleApplication
             Size = size,
         };
 
-        vk!.CmdCopyBuffer(commandBuffer, srcBuffer, dstBuffer, 1, copyRegion);
+        vk!.CmdCopyBuffer(commandBuffer, srcBuffer, dstBuffer, 1, in copyRegion);
 
         EndSingleTimeCommands(commandBuffer);
     }
@@ -1508,7 +1508,7 @@ unsafe class HelloTriangleApplication
 
         fixed (CommandBuffer* commandBuffersPtr = commandBuffers)
         {
-            if (vk!.AllocateCommandBuffers(device, allocInfo, commandBuffersPtr) != Result.Success)
+            if (vk!.AllocateCommandBuffers(device, in allocInfo, commandBuffersPtr) != Result.Success)
             {
                 throw new Exception("failed to allocate command buffers!");
             }
@@ -1522,7 +1522,7 @@ unsafe class HelloTriangleApplication
                 SType = StructureType.CommandBufferBeginInfo,
             };
 
-            if (vk!.BeginCommandBuffer(commandBuffers[i], beginInfo) != Result.Success)
+            if (vk!.BeginCommandBuffer(commandBuffers[i], in beginInfo) != Result.Success)
             {
                 throw new Exception("failed to begin recording command buffer!");
             }
@@ -1573,7 +1573,7 @@ unsafe class HelloTriangleApplication
 
             vk!.CmdBindIndexBuffer(commandBuffers[i], indexBuffer, 0, IndexType.Uint16);
 
-            vk!.CmdBindDescriptorSets(commandBuffers[i], PipelineBindPoint.Graphics, pipelineLayout, 0, 1, descriptorSets![i], 0, null);
+            vk!.CmdBindDescriptorSets(commandBuffers[i], PipelineBindPoint.Graphics, pipelineLayout, 0, 1, in descriptorSets![i], 0, null);
 
             vk!.CmdDrawIndexed(commandBuffers[i], (uint)indices.Length, 1, 0, 0, 0);
 
@@ -1607,9 +1607,9 @@ unsafe class HelloTriangleApplication
 
         for (var i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
         {
-            if (vk!.CreateSemaphore(device, semaphoreInfo, null, out imageAvailableSemaphores[i]) != Result.Success ||
-                vk!.CreateSemaphore(device, semaphoreInfo, null, out renderFinishedSemaphores[i]) != Result.Success ||
-                vk!.CreateFence(device, fenceInfo, null, out inFlightFences[i]) != Result.Success)
+            if (vk!.CreateSemaphore(device, in semaphoreInfo, null, out imageAvailableSemaphores[i]) != Result.Success ||
+                vk!.CreateSemaphore(device, in semaphoreInfo, null, out renderFinishedSemaphores[i]) != Result.Success ||
+                vk!.CreateFence(device, in fenceInfo, null, out inFlightFences[i]) != Result.Success)
             {
                 throw new Exception("failed to create synchronization objects for a frame!");
             }
@@ -1639,7 +1639,7 @@ unsafe class HelloTriangleApplication
 
     private void DrawFrame(double delta)
     {
-        vk!.WaitForFences(device, 1, inFlightFences![currentFrame], true, ulong.MaxValue);
+        vk!.WaitForFences(device, 1, in inFlightFences![currentFrame], true, ulong.MaxValue);
 
         uint imageIndex = 0;
         var result = khrSwapChain!.AcquireNextImage(device, swapChain, ulong.MaxValue, imageAvailableSemaphores![currentFrame], default, ref imageIndex);
@@ -1658,7 +1658,7 @@ unsafe class HelloTriangleApplication
 
         if (imagesInFlight![imageIndex].Handle != default)
         {
-            vk!.WaitForFences(device, 1, imagesInFlight[imageIndex], true, ulong.MaxValue);
+            vk!.WaitForFences(device, 1, in imagesInFlight[imageIndex], true, ulong.MaxValue);
         }
         imagesInFlight[imageIndex] = inFlightFences[currentFrame];
 
@@ -1689,9 +1689,9 @@ unsafe class HelloTriangleApplication
             PSignalSemaphores = signalSemaphores,
         };
 
-        vk!.ResetFences(device, 1, inFlightFences[currentFrame]);
+        vk!.ResetFences(device, 1, in inFlightFences[currentFrame]);
 
-        if (vk!.QueueSubmit(graphicsQueue, 1, submitInfo, inFlightFences[currentFrame]) != Result.Success)
+        if (vk!.QueueSubmit(graphicsQueue, 1, in submitInfo, inFlightFences[currentFrame]) != Result.Success)
         {
             throw new Exception("failed to submit draw command buffer!");
         }
@@ -1710,7 +1710,7 @@ unsafe class HelloTriangleApplication
             PImageIndices = &imageIndex
         };
 
-        result = khrSwapChain.QueuePresent(presentQueue, presentInfo);
+        result = khrSwapChain.QueuePresent(presentQueue, in presentInfo);
 
         if (result == Result.ErrorOutOfDateKhr || result == Result.SuboptimalKhr || frameBufferResized)
         {
@@ -1740,7 +1740,7 @@ unsafe class HelloTriangleApplication
         {
             createInfo.PCode = (uint*)codePtr;
 
-            if (vk!.CreateShaderModule(device, createInfo, null, out shaderModule) != Result.Success)
+            if (vk!.CreateShaderModule(device, in createInfo, null, out shaderModule) != Result.Success)
             {
                 throw new Exception();
             }
