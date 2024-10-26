@@ -11,18 +11,10 @@
 	<ItemGroup>
 		<PackageReference Include="Silk.NET" />
 		<PackageReference Include="Silk.NET.Vulkan.Extensions.EXT" />
-		<PackageReference Include="SixLabors.ImageSharp" />
 	</ItemGroup>
 
 	<ItemGroup>
-		<VertexShader Include="../21_DescriptorLayout/**/*.vert" />
-		<FragmentShader Include="../21_DescriptorLayout/**/*.frag" />
+		<VertexShader Include="../18_VertexInput/**/*.vert" />
+		<FragmentShader Include="../18_VertexInput/**/*.frag" />
 	</ItemGroup>
-
-	<ItemGroup>
-	  <Content Include="..\..\Assets\texture.jpg" Link="Textures\texture.jpg">
-	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-	  </Content>
-	</ItemGroup>
-
 </Project>

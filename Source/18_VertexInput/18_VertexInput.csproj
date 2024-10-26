@@ -11,5 +11,13 @@
   <ItemGroup>
     <PackageReference Include="Silk.NET" />
 	  <PackageReference Include="Silk.NET.Vulkan.Extensions.EXT" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <FragmentShader Remove="18_shader_vertexbuffer.frag" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <VertexShader Remove="18_shader_vertexbuffer.vert" />
   </ItemGroup>	
 </Project>

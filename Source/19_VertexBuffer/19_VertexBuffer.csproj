@@ -14,7 +14,7 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<VertexShader Include="../17_VertexInput/**/*.vert" />
-		<FragmentShader Include="../17_VertexInput/**/*.frag" />
+		<VertexShader Include="../18_VertexInput/**/*.vert" />
+		<FragmentShader Include="../18_VertexInput/**/*.frag" />
 	</ItemGroup>
 </Project>

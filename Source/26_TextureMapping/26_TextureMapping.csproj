@@ -11,5 +11,21 @@
 	<ItemGroup>
 		<PackageReference Include="Silk.NET" />
 		<PackageReference Include="Silk.NET.Vulkan.Extensions.EXT" />
+		<PackageReference Include="SixLabors.ImageSharp" />
 	</ItemGroup>
+
+	<ItemGroup>
+	  <Content Include="..\..\Assets\texture.jpg" Link="Textures\texture.jpg">
+	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	  </Content>
+	</ItemGroup>
+
+	<ItemGroup>
+	  <FragmentShader Remove="26_shader_textures.frag" />
+	</ItemGroup>
+
+	<ItemGroup>
+	  <VertexShader Remove="26_shader_textures.vert" />
+	</ItemGroup>
+
 </Project>

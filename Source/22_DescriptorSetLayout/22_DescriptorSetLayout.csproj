@@ -1,0 +1,23 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+	<PropertyGroup>
+		<OutputType>WinExe</OutputType>
+		<TargetFramework>net8.0</TargetFramework>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<Nullable>enable</Nullable>
+		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<PackageReference Include="Silk.NET" />
+		<PackageReference Include="Silk.NET.Vulkan.Extensions.EXT" />
+	</ItemGroup>
+
+	<ItemGroup>
+	  <FragmentShader Remove="22_shader_ubo.frag" />
+	</ItemGroup>
+
+	<ItemGroup>
+	  <VertexShader Remove="22_shader_ubo.vert" />
+	</ItemGroup>
+</Project>
