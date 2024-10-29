@@ -109,7 +109,7 @@ unsafe class HelloTriangleApplication
             ApplicationVersion = new Version32(1, 0, 0),
             PEngineName = (byte*)Marshal.StringToHGlobalAnsi("No Engine"),
             EngineVersion = new Version32(1, 0, 0),
-            ApiVersion = Vk.Version11
+            ApiVersion = Vk.Version12
         };
 
         InstanceCreateInfo createInfo = new()
