@@ -140,6 +140,7 @@ unsafe class HelloTriangleApplication
 
     private Buffer[]? uniformBuffers;
     private DeviceMemory[]? uniformBuffersMemory;
+    private nint[]? uniformBuffersMapped;
 
     private DescriptorPool descriptorPool;
     private DescriptorSet[]? descriptorSets;
@@ -257,6 +258,7 @@ unsafe class HelloTriangleApplication
         for (int i = 0; i < swapChainImages!.Length; i++)
         {
             vk!.DestroyBuffer(device, uniformBuffers![i], null);
+            vk!.UnmapMemory(device, uniformBuffersMemory![i]);
             vk!.FreeMemory(device, uniformBuffersMemory![i], null);
         }
 
@@ -345,7 +347,7 @@ unsafe class HelloTriangleApplication
             ApplicationVersion = new Version32(1, 0, 0),
             PEngineName = (byte*)Marshal.StringToHGlobalAnsi("No Engine"),
             EngineVersion = new Version32(1, 0, 0),
-            ApiVersion = Vk.Version12
+            ApiVersion = Vk.Version10
         };
 
         InstanceCreateInfo createInfo = new()
@@ -1105,11 +1107,20 @@ unsafe class HelloTriangleApplication
         ulong bufferSize = (ulong)Unsafe.SizeOf<UniformBufferObject>();
 
         uniformBuffers = new Buffer[swapChainImages!.Length];
-        uniformBuffersMemory = new DeviceMemory[swapChainImages!.Length];
+        uniformBuffersMemory = new DeviceMemory[swapChainImages.Length];
+        uniformBuffersMapped = new nint[swapChainImages.Length];
 
         for (int i = 0; i < swapChainImages.Length; i++)
         {
             CreateBuffer(bufferSize, BufferUsageFlags.UniformBufferBit, MemoryPropertyFlags.HostVisibleBit | MemoryPropertyFlags.HostCoherentBit, ref uniformBuffers[i], ref uniformBuffersMemory[i]);
+
+            void* data;
+            if (vk!.MapMemory(device, uniformBuffersMemory[i], 0, bufferSize, 0, &data) != Result.Success)
+            {
+                throw new Exception("failed to map uniform buffer memory!");
+            }
+
+            uniformBuffersMapped[i] = (nint)data;
         }
 
     }
@@ -1425,11 +1436,7 @@ unsafe class HelloTriangleApplication
         };
         ubo.proj.M22 *= -1;
 
-
-        void* data;
-        vk!.MapMemory(device, uniformBuffersMemory![currentImage], 0, (ulong)Unsafe.SizeOf<UniformBufferObject>(), 0, &data);
-        new Span<UniformBufferObject>(data, 1)[0] = ubo;
-        vk!.UnmapMemory(device, uniformBuffersMemory![currentImage]);
+        new Span<UniformBufferObject>((void*)uniformBuffersMapped![(int)currentImage], 1)[0] = ubo;
 
     }
 

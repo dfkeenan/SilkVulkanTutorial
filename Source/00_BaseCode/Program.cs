@@ -26,6 +26,7 @@ unsafe class HelloTriangleApplication
         var options = WindowOptions.DefaultVulkan with
         {
             Size = new Vector2D<int>(WIDTH, HEIGHT),
+            WindowBorder = WindowBorder.Fixed,
             Title = "Vulkan"
         };
 
