@@ -83,6 +83,7 @@ unsafe class HelloTriangleApplication
         var options = WindowOptions.DefaultVulkan with
         {
             Size = new Vector2D<int>(WIDTH, HEIGHT),
+            WindowBorder = WindowBorder.Fixed,
             Title = "Vulkan",
         };
 
@@ -145,7 +146,7 @@ unsafe class HelloTriangleApplication
             ApplicationVersion = new Version32(1, 0, 0),
             PEngineName = (byte*)Marshal.StringToHGlobalAnsi("No Engine"),
             EngineVersion = new Version32(1, 0, 0),
-            ApiVersion = Vk.Version12
+            ApiVersion = Vk.Version10
         };
 
         InstanceCreateInfo createInfo = new()

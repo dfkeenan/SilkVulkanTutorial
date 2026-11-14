@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net11.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Silk.NET" />
+    <PackageReference Include="Silk.NET.Vulkan.Extensions.EXT" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <VertexShader Include="../09_ShaderModules/**/*.vert" />
+    <FragmentShader Include="../09_ShaderModules/**/*.frag" />
+  </ItemGroup>
+
+</Project>
